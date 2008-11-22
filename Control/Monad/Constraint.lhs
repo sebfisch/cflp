@@ -29,8 +29,8 @@ computations and shared monadic computations are evaluated only once.
 > ) where
 > 
 > import Control.Monad
-> import Control.Monad.Trans
 > import Control.Monad.State
+> import Control.Monad.Trans
 >
 > class ConstraintStore c cs
 >  where
