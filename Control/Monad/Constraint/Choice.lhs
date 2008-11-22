@@ -53,9 +53,9 @@ The `assert` operations fails to insert conflicting choices.
 
 ~~~ { .literatehaskell }
 
-> choice :: (MonadPlus m, Collects (Unique,Int) m) => Unique -> [m a] -> m a
+> choice :: (MonadPlus m, MonadConstr (Unique,Int) m) => Unique -> [m a] -> m a
 > choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
->  where constrain n = (collect (u,n)>>)
+>  where constrain n = (constr (u,n)>>)
 
 ~~~
 

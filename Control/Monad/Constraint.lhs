@@ -18,13 +18,13 @@ computations and shared monadic computations are evaluated only once.
 > module Control.Monad.Constraint (
 >
 >   -- type classes
->   ConstraintStore(..), Collects(..), 
+>   ConstraintStore(..), MonadConstr(..), 
 >
 >   -- monad transformer
->   CollectsT, 
+>   ConstrT, 
 >
 >   -- collecting constraints
->   runConstrained
+>   runConstrT
 >
 > ) where
 > 
@@ -49,27 +49,46 @@ constraint may be supported by different constraint stores.
 
 ~~~ { .literatehaskell }
 
-> class Collects c m
+> class MonadConstr c m
 >  where
->   collect :: c -> m ()
+>   constr :: c -> m ()
 
 ~~~
 
 A monad that supports collecting constraints is an instance of the
-class `Collects` that provides an operation to collect items of type
-`c`. One monad may collect items of different types and the same item
-may be collectable in different monads.
+class `MonadConstr` that provides an operation to associate a
+constraint of type `c` to monadic computations. One monad may support
+different types of constraints and the same constraint type may be
+supported by different monads.
 
 ~~~ { .literatehaskell }
 
-> newtype CollectsT cs m a = CollectsT { runCollectsT :: m (WithCollect cs m a) }
-> data WithCollect cs m a
->   = Lifted a
->   | forall c . ConstraintStore c cs => Collect c (CollectsT cs m a)
+> instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (StateT cs m)
+>  where
+>   constr = assert
 
 ~~~
 
-We define a monad transformer `CollectsT` that adds the capability of
+An instance of `MonadPlus` that threads a constraint store can be
+constrained with constraints that are supported by the threaded store.
+
+We do not define this instance for arbitrary state monads because that
+would result in an undecidable instance.
+
+State monads are a natural choice for a constraint monad, yet they
+have a drawback: monadic values are functions that are reexecuted for
+each shared occurrence of a monadic sub computation.
+
+~~~ { .literatehaskell }
+
+> newtype ConstrT cs m a = ConstrT { unConstrT :: m (WithConstr cs m a) }
+> data WithConstr cs m a
+>   = Lifted a
+>   | forall c . ConstraintStore c cs => Constr c (ConstrT cs m a)
+
+~~~
+
+We define a monad transformer `ConstrT` that adds the capability of
 collecting constraints to arbitrary monads. Monadic actions in the
 resulting monads are data terms if monadic actions are data terms in
 the base monad. As a consequence, they are evaluated only once, even
@@ -82,14 +101,14 @@ action need to be supported by the constraint store of type `cs`.
 
 ~~~ { .literatehaskell }
 
-> runConstrained :: MonadPlus m => CollectsT cs m a -> cs -> m (a,cs)
-> runConstrained = runStateT . collector
+> runConstrT :: MonadPlus m => ConstrT cs m a -> cs -> m (a,cs)
+> runConstrT = runStateT . run
 >  where
->   collector :: MonadPlus m => CollectsT cs m a -> StateT cs m a
->   collector x = lift (runCollectsT x) >>= constrain
+>   run :: MonadPlus m => ConstrT cs m a -> StateT cs m a
+>   run x = lift (unConstrT x) >>= constrain
 >
->   constrain (Lifted a)    = return a
->   constrain (Collect c y) = do assert c; collector y
+>   constrain (Lifted a)   = return a
+>   constrain (Constr c y) = do constr c; run y
 
 ~~~
 
@@ -97,11 +116,15 @@ In order to eliminate stored constraints, we thread a constraint store
 through the monadic value and assert the associated constraints into
 the store.
 
+The operation `runConstrT` has the same type as `runStateT` for state
+transformers and indeed performs the delayed constraints in a state
+monad.
+
 ~~~ { .literatehaskell }
 
-> instance (Monad m, ConstraintStore c cs) => Collects c (CollectsT cs m)
+> instance (Monad m, ConstraintStore c cs) => MonadConstr c (ConstrT cs m)
 >  where
->   collect c = CollectsT (return (Collect c (return ())))
+>   constr c = ConstrT (return (Constr c (return ())))
 
 ~~~
 
@@ -109,26 +132,26 @@ Transformed monads can collect constraints and are themselves monads.
 
 ~~~ { .literatehaskell }
 
-> instance Monad m => Monad (CollectsT cs m)
+> instance Monad m => Monad (ConstrT cs m)
 >  where
->   return = CollectsT . return . Lifted
+>   return = ConstrT . return . Lifted
 >
->   x >>= f = CollectsT (runCollectsT x >>= g)
->    where g (Lifted a)    = runCollectsT (f a)
->          g (Collect c y) = return (Collect c (y >>= f))
+>   x >>= f = ConstrT (unConstrT x >>= g)
+>    where g (Lifted a)   = unConstrT (f a)
+>          g (Constr c y) = return (Constr c (y >>= f))
 >
-> instance MonadPlus m => MonadPlus (CollectsT cs m)
+> instance MonadPlus m => MonadPlus (ConstrT cs m)
 >  where
->   mzero       = CollectsT mzero
->   x `mplus` y = CollectsT (runCollectsT x `mplus` runCollectsT y)
+>   mzero       = ConstrT mzero
+>   x `mplus` y = ConstrT (unConstrT x `mplus` unConstrT y)
 >
-> instance MonadTrans (CollectsT cs)
+> instance MonadTrans (ConstrT cs)
 >  where
->   lift x = CollectsT (x >>= return . Lifted)
+>   lift x = ConstrT (x >>= return . Lifted)
 
 ~~~
 
 If the base monad is an instance of `MonadPlus`, then the transformed
-monad also is. Finally, we specify that `CollectsT` (with an arbitrary
+monad also is. Finally, we specify that `ConstrT` (with an arbitrary
 constraint store `cs`) is a monad transformer.
 
