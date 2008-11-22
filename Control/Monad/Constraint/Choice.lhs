@@ -53,7 +53,7 @@ The `assert` operations fails to insert conflicting choices.
 
 ~~~ { .literatehaskell }
 
-> choice :: (MonadPlus m, Collect (Unique,Int) m) => Unique -> [m a] -> m a
+> choice :: (MonadPlus m, Collects (Unique,Int) m) => Unique -> [m a] -> m a
 > choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
 >  where constrain n = (collect (u,n)>>)
 
@@ -63,6 +63,6 @@ The operation `choice` takes a unique label and a list of monadic
 values that can be constrained with choice constraints. The result is
 a single monadic action combining the alternatives with `mplus`. If it
 occurs more than once in a bigger monadic action, the result is
-constrained to take the same alternative everywhere when solving
-collected constraints.
+constrained to take the same alternative everywhere when collecting
+constraints.
 
