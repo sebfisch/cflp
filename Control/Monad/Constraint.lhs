@@ -72,10 +72,7 @@ supported by different monads.
 An instance of `MonadPlus` that threads a constraint store can be
 constrained with constraints that are supported by the threaded store.
 
-We do not define this instance for arbitrary state monads because that
-would result in an undecidable instance.
-
-State monads are a natural choice for a constraint monad, yet they
+State monads are a natural choice for a constraint monad, but they
 have a drawback: monadic values are functions that are reexecuted for
 each shared occurrence of a monadic sub computation.
 
@@ -83,7 +80,7 @@ each shared occurrence of a monadic sub computation.
 
 > newtype ConstrT cs m a = ConstrT { unConstrT :: m (WithConstr cs m a) }
 > data WithConstr cs m a
->   = Lifted a
+>   = Return a
 >   | forall c . ConstraintStore c cs => Constr c (ConstrT cs m a)
 
 ~~~
@@ -107,7 +104,7 @@ action need to be supported by the constraint store of type `cs`.
 >   run :: MonadPlus m => ConstrT cs m a -> StateT cs m a
 >   run x = lift (unConstrT x) >>= constrain
 >
->   constrain (Lifted a)   = return a
+>   constrain (Return a)   = return a
 >   constrain (Constr c y) = do constr c; run y
 
 ~~~
@@ -134,10 +131,10 @@ Transformed monads can collect constraints and are themselves monads.
 
 > instance Monad m => Monad (ConstrT cs m)
 >  where
->   return = ConstrT . return . Lifted
+>   return = ConstrT . return . Return
 >
 >   x >>= f = ConstrT (unConstrT x >>= g)
->    where g (Lifted a)   = unConstrT (f a)
+>    where g (Return a)   = unConstrT (f a)
 >          g (Constr c y) = return (Constr c (y >>= f))
 >
 > instance MonadPlus m => MonadPlus (ConstrT cs m)
@@ -147,7 +144,7 @@ Transformed monads can collect constraints and are themselves monads.
 >
 > instance MonadTrans (ConstrT cs)
 >  where
->   lift x = ConstrT (x >>= return . Lifted)
+>   lift x = ConstrT (x >>= return . Return)
 
 ~~~
 
