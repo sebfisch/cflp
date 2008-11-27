@@ -82,11 +82,15 @@ each shared occurrence of a monadic sub computation.
 
 ~~~
 
+
+Monad Transformer
+-----------------
+
 We define a monad transformer `ConstrT` that adds the capability of
-collecting constraints to arbitrary monads. Monadic actions in the
-resulting monads are data terms if monadic actions are data terms in
-the base monad. As a consequence, they are evaluated only once, even
-if they are shared.
+collecting constraints to arbitrary instances of `MonadPlus`. Monadic
+actions in the resulting monads are data terms if monadic actions are
+data terms in the base monad. As a consequence, they are evaluated
+only once, even if they are shared.
 
 The type `c` of collected constraints is existentially quantified in
 order to allow different types of constraints in the same monadic
@@ -110,9 +114,8 @@ In order to eliminate stored constraints, we thread a constraint store
 through the monadic value and assert the associated constraints into
 the store.
 
-The operation `runConstrT` has the same type as `runStateT` for state
-transformers and indeed performs the delayed constraints in a state
-monad.
+We use the state monad transformer `StateT` to thread the constraint
+store through the base monad of the constraint monad.
 
 ~~~ { .literatehaskell }
 

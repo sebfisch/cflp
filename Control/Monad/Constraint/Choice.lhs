@@ -18,7 +18,7 @@ the same value if they are shared.
 >      -XFlexibleContexts
 >   #-}
 >
-> module Control.Monad.Constraint.Choice ( choice ) where
+> module Control.Monad.Constraint.Choice ( Choice, ChoiceStore, choice ) where
 >
 > import Control.Monad
 > import Control.Monad.State
@@ -36,26 +36,29 @@ default.
 
 ~~~ { .literatehaskell }
 
-> instance Eq a => ConstraintStore (Unique,a) (UniqFM a)
+> newtype Choice = Choice (Unique,Int)
+> newtype ChoiceStore = ChoiceStore (UniqFM Int)
+>
+> instance ConstraintStore Choice ChoiceStore
 >  where
->   assert (u,x) = do
->     cs <- get
->     maybe (put (addToUFM_Directly cs u x))
+>   assert (Choice (u,x)) = do
+>     ChoiceStore cs <- get
+>     maybe (put (ChoiceStore (addToUFM_Directly cs u x)))
 >           (guard . (x==))
 >           (lookupUFM_Directly cs u)
 
 ~~~
 
-When each choice is labeled with a `Unique`, then we can store
-alternatives in a `UniqFM` making it an instance of `ConstraintStore`.
+Choices are labeled with a `Unique`, so we can store them in a
+`UniqFM` making it an instance of `ConstraintStore`.
 
 The `assert` operations fails to insert conflicting choices.
 
 ~~~ { .literatehaskell }
 
-> choice :: MonadConstr (Unique,Int) m => Unique -> [m a] -> m a
+> choice :: MonadConstr Choice m => Unique -> [m a] -> m a
 > choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
->  where constrain n = (constr (u,n)>>)
+>  where constrain n = (constr (Choice (u,n))>>)
 
 ~~~
 

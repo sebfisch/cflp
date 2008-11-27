@@ -2,8 +2,8 @@
 % [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
 % November, 2008
 
-We define a datatype with operations for lazy non-deterministic
-programming.
+This module provides a datatype with operations for lazy
+non-deterministic programming.
 
 ~~~ { .literatehaskell }
 
@@ -14,6 +14,8 @@ programming.
 >   #-}
 >
 > module Data.LazyNondet where
+>
+> import Data.Generics
 >
 > import Control.Monad
 > import Control.Monad.State
@@ -33,17 +35,20 @@ default.
 
 ~~~ { .literatehaskell }
 
-> data NormalForm = NormalForm ConsName [NormalForm]
-> type ConsName   = Int
+> data NormalForm = NormalForm Constr [NormalForm]
+>  deriving Show
 
 ~~~
 
 The normal form of data is represented by the type `NormalForm` which
-defines a Tree of constructors.
+defines a tree of constructors. The type `Constr` is a representation
+of constructors defined in the `Data.Generics` package. With generic
+programming we can convert between Haskell data types and the
+`NormalForm` type.
 
 ~~~ { .literatehaskell }
 
-> data HeadNormalForm m = Cons ConsName [Untyped m]
+> data HeadNormalForm m = Cons DataType ConIndex [Untyped m]
 > type Untyped m = m (HeadNormalForm m)
 
 ~~~
@@ -53,6 +58,10 @@ evaluation of arguments of a constructor may lead to different
 non-deterministic results. Hence, we use a monad around every
 constructor in the head-normal form of a value.
 
+In head-normal forms we split the constructor representation into a
+representation of the data type and the index of the constructor, to
+enable pattern matching on the index.
+
 ~~~ { .literatehaskell }
 
 > newtype Typed a m = Typed { untyped :: Untyped m }
@@ -60,7 +69,12 @@ constructor in the head-normal form of a value.
 ~~~
 
 Untyped non-deterministic data can be phantom typed in order to define
-logic variables by overloading.
+logic variables by overloading. The phantom type must be the Haskell
+data type that should be used for conversion.
+
+
+Unique Identifiers
+------------------
 
 ~~~ { .literatehaskell }
 
@@ -91,6 +105,10 @@ order to constrain shared choices.
 We provide an operation `withUnique` to simplify the distribution of
 unique identifiers.
 
+
+Combinators for Functional-Logic Programming
+--------------------------------------------
+
 ~~~ { .literatehaskell }
 
 > class Nondet a
@@ -105,14 +123,14 @@ represents a logic variable of the corresponding type.
 
 ~~~ { .literatehaskell }
 
-> oneOf :: MonadConstr (Unique,Int) m => [Typed a m] -> ND a m
+> oneOf :: MonadConstr Choice m => [Typed a m] -> ND a m
 > oneOf xs us = Typed (choice (uniqFromSupply us) (map untyped xs))
 
 ~~~
 
-The operation `oneOf` takes a list of type non-deterministic values
-and returns a non-deterministic value that yields on of the lists
-elements.
+The operation `oneOf` takes a list of non-deterministic values and
+returns a non-deterministic value that yields one of the elements in
+the given list.
 
 ~~~ { .literatehaskell }
 
@@ -136,21 +154,48 @@ The `caseOf` operation is used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
 value.
 
+
+Converting Between Primitive and Non-Deterministic Data
+-------------------------------------------------------
+
 ~~~ { .literatehaskell }
 
-> normalForm :: RunConstr cs m t => Typed a (t cs m) -> cs -> m NormalForm
-> normalForm = evalStateT . nf . untyped
+> generic :: Data a => a -> NormalForm
+> generic x = NormalForm (toConstr x) (gmapQ generic x)
+>
+> primitive :: Data a => NormalForm -> a
+> primitive (NormalForm con args) =
+>   snd (gmapAccumT perkid args (fromConstr con))
+>  where
+>   perkid (t:ts) _ = (ts, primitive t)
+>
+> nondet :: Monad m => NormalForm -> Untyped m
+> nondet (NormalForm con args) =
+>   return (Cons (constrType con) (constrIndex con) (map nondet args))
+>
+> typed :: (Monad m, Data a) => a -> Typed a m
+> typed = Typed . nondet . generic
+
+~~~
+
+We provide generic operations to convert between instances of the
+`Data` class and non-deterministic data.
+
+~~~ { .literatehaskell }
+
+> normalForm :: (RunConstr cs m t, Data a) => Typed a (t cs m) -> cs -> m a
+> normalForm x cs = liftM primitive $ evalStateT (nf (untyped x)) cs
 >
 > nf :: RunConstr cs m t => Untyped (t cs m) -> StateT cs m NormalForm
 > nf x = do
->   Cons name args <- runConstr x
+>   Cons typ idx args <- runConstr x
 >   nfs <- mapM nf args
->   return (NormalForm name nfs)
+>   return (NormalForm (indexConstr typ idx) nfs)
 
 ~~~
 
 The `normalForm` function evaluates a non-deterministic value and
-lifts all non-deterministic choices to the top level. In the results,
-arguments of constructors are always deterministic.
-
+lifts all non-deterministic choices to the top level. The results are
+deterministic values and can be converted into their Haskell
+representation.
 
