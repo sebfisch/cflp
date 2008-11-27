@@ -18,13 +18,10 @@ computations and shared monadic computations are evaluated only once.
 > module Control.Monad.Constraint (
 >
 >   -- type classes
->   ConstraintStore(..), MonadConstr(..), 
+>   ConstraintStore(..), MonadConstr(..), RunConstr(..),
 >
 >   -- monad transformer
->   ConstrT, 
->
->   -- collecting constraints
->   runConstrT
+>   ConstrT
 >
 > ) where
 > 
@@ -49,7 +46,7 @@ constraint may be supported by different constraint stores.
 
 ~~~ { .literatehaskell }
 
-> class MonadConstr c m
+> class MonadPlus m => MonadConstr c m
 >  where
 >   constr :: c -> m ()
 
@@ -98,8 +95,8 @@ action need to be supported by the constraint store of type `cs`.
 
 ~~~ { .literatehaskell }
 
-> runConstrT :: MonadPlus m => ConstrT cs m a -> cs -> m (a,cs)
-> runConstrT = runStateT . run
+> runConstrT :: MonadPlus m => ConstrT cs m a -> StateT cs m a
+> runConstrT = run
 >  where
 >   run :: MonadPlus m => ConstrT cs m a -> StateT cs m a
 >   run x = lift (unConstrT x) >>= constrain
@@ -119,7 +116,7 @@ monad.
 
 ~~~ { .literatehaskell }
 
-> instance (Monad m, ConstraintStore c cs) => MonadConstr c (ConstrT cs m)
+> instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (ConstrT cs m)
 >  where
 >   constr c = ConstrT (return (Constr c (return ())))
 
@@ -151,4 +148,30 @@ Transformed monads can collect constraints and are themselves monads.
 If the base monad is an instance of `MonadPlus`, then the transformed
 monad also is. Finally, we specify that `ConstrT` (with an arbitrary
 constraint store `cs`) is a monad transformer.
+
+~~~ { .literatehaskell }
+
+> class (MonadPlus m, MonadTrans (t cs)) => RunConstr cs m t
+>  where
+>   runConstr :: t cs m a -> StateT cs m a
+
+~~~
+
+Finally, we define an interface for monads that can solve associated
+constraints. Solutions may be returned in an arbitrary monad that
+doesn't need to support constraints.
+
+~~~ { .literatehaskell }
+
+> instance MonadPlus m => RunConstr cs m StateT
+>  where
+>   runConstr = id
+>
+> instance MonadPlus m => RunConstr cs m ConstrT
+>  where
+>   runConstr = runConstrT
+
+~~~
+
+Both state and constraint monads can solve associated constraints.
 
