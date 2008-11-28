@@ -7,7 +7,7 @@ constraints. The challenge is to define the interface such that
 instances can implement it without threading a store through monadic
 computations and shared monadic computations are evaluated only once.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > {-# OPTIONS 
 >      -XMultiParamTypeClasses
@@ -44,7 +44,7 @@ instance of `MonadPlus`.
 A constraint store may support different types of constraints and a
 constraint may be supported by different constraint stores.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > class MonadPlus m => MonadConstr c m
 >  where
@@ -58,7 +58,7 @@ constraint of type `c` to monadic computations. One monad may support
 different types of constraints and the same constraint type may be
 supported by different monads.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (StateT cs m)
 >  where
@@ -73,7 +73,7 @@ State monads are a natural choice for a constraint monad, but they
 have a drawback: monadic values are functions that are reexecuted for
 each shared occurrence of a monadic sub computation.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > newtype ConstrT cs m a = ConstrT { unConstrT :: m (WithConstr cs m a) }
 > data WithConstr cs m a
@@ -97,7 +97,7 @@ order to allow different types of constraints in the same monadic
 action. All types of constraints that are collected in a monadic
 action need to be supported by the constraint store of type `cs`.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > runConstrT :: MonadPlus m => ConstrT cs m a -> StateT cs m a
 > runConstrT = run
@@ -117,7 +117,7 @@ the store.
 We use the state monad transformer `StateT` to thread the constraint
 store through the base monad of the constraint monad.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (ConstrT cs m)
 >  where
@@ -127,7 +127,7 @@ store through the base monad of the constraint monad.
 
 Transformed monads can collect constraints and are themselves monads.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > instance Monad m => Monad (ConstrT cs m)
 >  where
@@ -152,7 +152,7 @@ If the base monad is an instance of `MonadPlus`, then the transformed
 monad also is. Finally, we specify that `ConstrT` (with an arbitrary
 constraint store `cs`) is a monad transformer.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > class (MonadPlus m, MonadTrans (t cs)) => RunConstr cs m t
 >  where
@@ -160,11 +160,11 @@ constraint store `cs`) is a monad transformer.
 
 ~~~
 
-Finally, we define an interface for monads that can solve associated
+We also define an interface for monads that can solve associated
 constraints. Solutions may be returned in an arbitrary monad that
 doesn't need to support constraints.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > instance MonadPlus m => RunConstr cs m StateT
 >  where

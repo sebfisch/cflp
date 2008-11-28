@@ -10,7 +10,7 @@ Based on this constraint store, we provide a function `choice` that
 can be used to generate choices that are constrained to evaluate to
 the same value if they are shared.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > {-# OPTIONS
 >      -XMultiParamTypeClasses
@@ -34,7 +34,7 @@ the same value if they are shared.
 We borrow unique identifiers from the package `ghc` which is hidden by
 default.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > newtype Choice = Choice (Unique,Int)
 > newtype ChoiceStore = ChoiceStore (UniqFM Int)
@@ -54,7 +54,7 @@ Choices are labeled with a `Unique`, so we can store them in a
 
 The `assert` operations fails to insert conflicting choices.
 
-~~~ { .literatehaskell }
+~~~ { .LiterateHaskell }
 
 > choice :: MonadConstr Choice m => Unique -> [m a] -> m a
 > choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
