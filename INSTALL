@@ -4,9 +4,9 @@
 
 You can install the `cflp` package using Cabal as follows.
 
- 1. Unzip the sources and move into the source directory.
+ 1. Unpack the sources and move into the source directory.
 
-        > unzip cflp-*.zip
+        > tar -xzf cflp-*.tar.gz
         > cd cflp-*
 
  2. Run configure, build and install.
