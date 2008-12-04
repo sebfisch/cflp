@@ -1,5 +1,5 @@
 % Sharing Choices with Constraints
-% [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
+% Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % November, 2008
 
 We define a constraint store that stores choice constraints which
@@ -16,7 +16,11 @@ the same value if they are shared.
 >      -XFlexibleContexts
 >   #-}
 >
-> module Control.Monad.Constraint.Choice ( Choice, ChoiceStore, choice ) where
+> module Control.Monad.Constraint.Choice (
+>
+>   Choice, ChoiceStore, noChoices, choice
+>
+> ) where
 >
 > import Control.Monad
 > import Control.Monad.State
@@ -32,6 +36,9 @@ default.
 
 > newtype Choice = Choice (Unique,Int)
 > newtype ChoiceStore = ChoiceStore (UniqFM Int)
+>
+> noChoices :: ChoiceStore
+> noChoices = ChoiceStore emptyUFM
 >
 > instance ConstraintStore Choice ChoiceStore
 >  where

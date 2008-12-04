@@ -1,5 +1,5 @@
 % Lazy Non-Deterministic Bools
-% [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
+% Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % November, 2008
 
 This module provides non-deterministic booleans.

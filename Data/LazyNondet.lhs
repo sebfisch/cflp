@@ -1,5 +1,5 @@
 % Lazy Non-Deterministic Data
-% [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
+% Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % November, 2008
 
 This module provides a datatype with operations for lazy
@@ -14,11 +14,13 @@ non-deterministic programming.
 >
 > module Data.LazyNondet (
 >
->   ID, NormalForm, HeadNormalForm(..), cons, Typed(..),
+>   NormalForm, HeadNormalForm(..), cons, Typed(..),
 >
->   Call(..), Unknown(..), failure, oneOf, caseOf,
+>   ID, initID, WithUnique(..), 
 >
->   normalForm
+>   Unknown(..), failure, oneOf, caseOf,
+>
+>   Data, normalForm
 >
 > ) where
 >
@@ -34,8 +36,6 @@ non-deterministic programming.
 > import Unique
 > import UniqSupply
 > import UniqFM
->
-> type ID = UniqSupply
 
 We borrow unique identifiers from the package `ghc` which is hidden by
 default.
@@ -88,34 +88,38 @@ Threading Unique Identifiers and a Constraint Store
 Non-deterministic computations need a supply of unique identifiers in
 order to constrain shared choices.
 
-> class Call a
+> type ID = UniqSupply
+>
+> initID :: IO ID
+> initID = mkSplitUniqSupply 'x'
+>
+> class WithUnique a
 >  where
 >   type Mon a :: * -> *
 >   type Typ a
 >
->   call :: a -> ID -> Typed (Mon a) (Typ a)
+>   withUnique :: a -> ID -> Typed (Mon a) (Typ a)
 >
-> instance Call (Typed m a)
+> instance WithUnique (Typed m a)
 >  where
 >   type Mon (Typed m a) = m
 >   type Typ (Typed m a) = a
 >
->   call x _ = x
+>   withUnique = const
 >
-> instance Call a => Call (ID -> a)
+> instance WithUnique a => WithUnique (ID -> a)
 >  where
 >   type Mon (ID -> a) = Mon a
 >   type Typ (ID -> a) = Typ a
 >
->   call f us = call (f vs) ws
+>   withUnique f us = withUnique (f vs) ws
 >    where (vs,ws) = splitUniqSupply us
 
-We provide an operation `call` to simplify the distribution of unique
-identifiers when calling possibly non-deterministic
-operations. Non-deterministic operations may have an arbitrary number
-of additional arguments for unique identifiers. The operation `call`
-provides a uniform interface for calling all possible variants of
-operations.
+We provide an operation `withUnique` to simplify the distribution of
+unique identifiers when defining possibly non-deterministic
+operations. Non-deterministic operations have an additional arguments
+for unique identifiers. The operation `withUnique` allows to consume
+an arbitrary number of unique identifiers hiding their generation.
 
 We make use of type families because GHC considers equivalent
 definitions with functional dependencies illegal ("the coverage

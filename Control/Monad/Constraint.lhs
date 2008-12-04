@@ -1,5 +1,5 @@
 % Constraint Collecting Monads
-% [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
+% Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % November, 2008
 
 We define type classes and instances for monads that can collect
@@ -31,11 +31,11 @@ computations and shared monadic computations are evaluated only once.
 >  where
 >   assert :: (MonadState cs m, MonadPlus m) => c -> m ()
 
-Constraint Stores provide an operation to assert a constraint. The
-constraint store is manipulated in an instance of `MonadState`. The
-`assert` operation may fail or branch depending on the given
-constraint or the current store and is, hence, performed in an
-instance of `MonadPlus`.
+Constraint Stores provides an operation to assert a constraint into a
+store. The constraint store is manipulated in an instance of
+`MonadState`. The `assert` operation may fail or branch depending on
+the given constraint or the current store and is, hence, performed in
+an instance of `MonadPlus`.
 
 A constraint store may support different types of constraints and a
 constraint may be supported by different constraint stores.

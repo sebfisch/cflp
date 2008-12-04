@@ -1,5 +1,5 @@
 % Lazy Non-Deterministic Lists
-% [Sebastian Fischer](mailto:sebf@informatik.uni-kiel.de)
+% Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % November, 2008
 
 This module provides non-deterministic lists.
@@ -23,5 +23,6 @@ for the element type.
 
 > instance Unknown a => Unknown [a]
 >  where
->   unknown = call (\u1 u2 -> oneOf [nil, unknown u1 ^: unknown u2])
+>   unknown = withUnique $ \u1 u2 -> 
+>              oneOf [nil, unknown u1 ^: unknown u2]
 
