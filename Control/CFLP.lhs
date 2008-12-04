@@ -10,9 +10,9 @@ functional-logic programming in Haskell.
 >      -XFlexibleContexts
 >   #-}
 >
-> module Control.LazyFLP (
+> module Control.CFLP (
 >
->   FLP,
+>   CFLP,
 >
 >   module Data.LazyNondet,
 >   module Data.LazyNondet.Bool,
@@ -27,8 +27,8 @@ functional-logic programming in Haskell.
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> class (MonadConstr Choice (t cs m), RunConstr cs m t) => FLP t cs m
+> class (MonadConstr Choice (t cs m), RunConstr cs m t) => CFLP cs t m
 
-The type class `FLP` is a shortcut for the type-class constraints on
-lazy functional-logic operations.
+The type class `CFLP` is a shortcut for the type-class constraints on
+constraint functional-logic operations.
 
