@@ -5,8 +5,6 @@
 This module provides an interface that can be used for lazy
 functional-logic programming in Haskell.
 
-~~~ { .LiterateHaskell }
-
 > {-# OPTIONS
 >      -XMultiParamTypeClasses
 >      -XFlexibleContexts
@@ -30,8 +28,6 @@ functional-logic programming in Haskell.
 > import Control.Monad.Constraint.Choice
 >
 > class (MonadConstr Choice (t cs m), RunConstr cs m t) => FLP t cs m
-
-~~~
 
 The type class `FLP` is a shortcut for the type-class constraints on
 lazy functional-logic operations.

@@ -10,8 +10,6 @@ Based on this constraint store, we provide a function `choice` that
 can be used to generate choices that are constrained to evaluate to
 the same value if they are shared.
 
-~~~ { .LiterateHaskell }
-
 > {-# OPTIONS
 >      -XMultiParamTypeClasses
 >      -XFlexibleInstances
@@ -29,12 +27,8 @@ the same value if they are shared.
 > import UniqSupply
 > import UniqFM
 
-~~~
-
 We borrow unique identifiers from the package `ghc` which is hidden by
 default.
-
-~~~ { .LiterateHaskell }
 
 > newtype Choice = Choice (Unique,Int)
 > newtype ChoiceStore = ChoiceStore (UniqFM Int)
@@ -47,20 +41,14 @@ default.
 >           (guard . (x==))
 >           (lookupUFM_Directly cs u)
 
-~~~
-
 Choices are labeled with a `Unique`, so we can store them in a
 `UniqFM` making it an instance of `ConstraintStore`.
 
 The `assert` operations fails to insert conflicting choices.
 
-~~~ { .LiterateHaskell }
-
 > choice :: MonadConstr Choice m => Unique -> [m a] -> m a
 > choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
 >  where constrain n = (constr (Choice (u,n))>>)
-
-~~~
 
 The operation `choice` takes a unique label and a list of monadic
 values that can be constrained with choice constraints. The result is

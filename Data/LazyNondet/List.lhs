@@ -4,8 +4,6 @@
 
 This module provides non-deterministic lists.
 
-~~~ { .LiterateHaskell }
-
 > module Data.LazyNondet.List where
 >
 > import Data.Data
@@ -20,16 +18,10 @@ This module provides non-deterministic lists.
 > fromList :: Monad m => [Typed m a] -> Typed m [a]
 > fromList = foldr (^:) nil
 
-~~~
-
 We can use logic variables of a list type if there are logic variables
 for the element type.
-
-~~~ { .LiterateHaskell }
 
 > instance Unknown a => Unknown [a]
 >  where
 >   unknown = call (\u1 u2 -> oneOf [nil, unknown u1 ^: unknown u2])
-
-~~~
 

@@ -4,8 +4,6 @@
 
 This module provides non-deterministic booleans.
 
-~~~ { .LiterateHaskell }
-
 > {-# OPTIONS
 >      -XFlexibleInstances
 >      -XFlexibleContexts
@@ -25,16 +23,10 @@ This module provides non-deterministic booleans.
 > false :: Monad m => Typed m Bool
 > false = Typed (return (cons (toConstr False) []))
 
-~~~
-
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.
-
-~~~ { .LiterateHaskell }
 
 > instance Unknown Bool
 >  where
 >   unknown = oneOf [false,true]
-
-~~~
 

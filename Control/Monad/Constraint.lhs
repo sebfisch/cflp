@@ -7,8 +7,6 @@ constraints. The challenge is to define the interface such that
 instances can implement it without threading a store through monadic
 computations and shared monadic computations are evaluated only once.
 
-~~~ { .LiterateHaskell }
-
 > {-# OPTIONS 
 >      -XMultiParamTypeClasses
 >      -XFlexibleInstances
@@ -33,8 +31,6 @@ computations and shared monadic computations are evaluated only once.
 >  where
 >   assert :: (MonadState cs m, MonadPlus m) => c -> m ()
 
-~~~
-
 Constraint Stores provide an operation to assert a constraint. The
 constraint store is manipulated in an instance of `MonadState`. The
 `assert` operation may fail or branch depending on the given
@@ -44,13 +40,9 @@ instance of `MonadPlus`.
 A constraint store may support different types of constraints and a
 constraint may be supported by different constraint stores.
 
-~~~ { .LiterateHaskell }
-
 > class MonadPlus m => MonadConstr c m
 >  where
 >   constr :: c -> m ()
-
-~~~
 
 A monad that supports collecting constraints is an instance of the
 class `MonadConstr` that provides an operation to associate a
@@ -58,13 +50,9 @@ constraint of type `c` to monadic computations. One monad may support
 different types of constraints and the same constraint type may be
 supported by different monads.
 
-~~~ { .LiterateHaskell }
-
 > instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (StateT cs m)
 >  where
 >   constr = assert
-
-~~~
 
 An instance of `MonadPlus` that threads a constraint store can be
 constrained with constraints that are supported by the threaded store.
@@ -73,14 +61,10 @@ State monads are a natural choice for a constraint monad, but they
 have a drawback: monadic values are functions that are reexecuted for
 each shared occurrence of a monadic sub computation.
 
-~~~ { .LiterateHaskell }
-
 > newtype ConstrT cs m a = ConstrT { unConstrT :: m (WithConstr cs m a) }
 > data WithConstr cs m a
 >   = Return a
 >   | forall c . ConstraintStore c cs => Constr c (ConstrT cs m a)
-
-~~~
 
 
 Monad Transformer
@@ -97,8 +81,6 @@ order to allow different types of constraints in the same monadic
 action. All types of constraints that are collected in a monadic
 action need to be supported by the constraint store of type `cs`.
 
-~~~ { .LiterateHaskell }
-
 > runConstrT :: MonadPlus m => ConstrT cs m a -> StateT cs m a
 > runConstrT = run
 >  where
@@ -108,8 +90,6 @@ action need to be supported by the constraint store of type `cs`.
 >   constrain (Return a)   = return a
 >   constrain (Constr c y) = do constr c; run y
 
-~~~
-
 In order to eliminate stored constraints, we thread a constraint store
 through the monadic value and assert the associated constraints into
 the store.
@@ -117,17 +97,11 @@ the store.
 We use the state monad transformer `StateT` to thread the constraint
 store through the base monad of the constraint monad.
 
-~~~ { .LiterateHaskell }
-
 > instance (MonadPlus m, ConstraintStore c cs) => MonadConstr c (ConstrT cs m)
 >  where
 >   constr c = ConstrT (return (Constr c (return ())))
 
-~~~
-
 Transformed monads can collect constraints and are themselves monads.
-
-~~~ { .LiterateHaskell }
 
 > instance Monad m => Monad (ConstrT cs m)
 >  where
@@ -146,25 +120,17 @@ Transformed monads can collect constraints and are themselves monads.
 >  where
 >   lift x = ConstrT (x >>= return . Return)
 
-~~~
-
 If the base monad is an instance of `MonadPlus`, then the transformed
 monad also is. Finally, we specify that `ConstrT` (with an arbitrary
 constraint store `cs`) is a monad transformer.
-
-~~~ { .LiterateHaskell }
 
 > class (MonadPlus m, MonadTrans (t cs)) => RunConstr cs m t
 >  where
 >   runConstr :: t cs m a -> StateT cs m a
 
-~~~
-
 We also define an interface for monads that can solve associated
 constraints. Solutions may be returned in an arbitrary monad that
 doesn't need to support constraints.
-
-~~~ { .LiterateHaskell }
 
 > instance MonadPlus m => RunConstr cs m StateT
 >  where
@@ -173,8 +139,6 @@ doesn't need to support constraints.
 > instance MonadPlus m => RunConstr cs m ConstrT
 >  where
 >   runConstr = runConstrT
-
-~~~
 
 Both state and constraint monads can solve associated constraints.
 

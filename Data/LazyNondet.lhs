@@ -5,8 +5,6 @@
 This module provides a datatype with operations for lazy
 non-deterministic programming.
 
-~~~ { .LiterateHaskell }
-
 > {-# OPTIONS
 >      -XMultiParamTypeClasses
 >      -XFlexibleContexts
@@ -39,25 +37,17 @@ non-deterministic programming.
 >
 > type ID = UniqSupply
 
-~~~
-
 We borrow unique identifiers from the package `ghc` which is hidden by
 default.
 
-~~~ { .LiterateHaskell }
-
 > data NormalForm = NormalForm Constr [NormalForm]
 >  deriving Show
-
-~~~
 
 The normal form of data is represented by the type `NormalForm` which
 defines a tree of constructors. The type `Constr` is a representation
 of constructors defined in the `Data.Generics` package. With generic
 programming we can convert between Haskell data types and the
 `NormalForm` type.
-
-~~~ { .LiterateHaskell }
 
 > data HeadNormalForm m = Cons DataType ConIndex [Untyped m]
 > type Untyped m = m (HeadNormalForm m)
@@ -72,8 +62,6 @@ programming we can convert between Haskell data types and the
 >     | otherwise = unwords (("("++show con):map show args++[")"])
 >    where con = indexConstr typ idx
 
-~~~
-
 Data in lazy functional-logic programs is evaluated on demand. The
 evaluation of arguments of a constructor may lead to different
 non-deterministic results. Hence, we use a monad around every
@@ -83,15 +71,11 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-~~~ { .LiterateHaskell }
-
 > newtype Typed m a = Typed { untyped :: Untyped m }
 >
 > instance Show (Typed [] a)
 >  where
 >   show = show . untyped
-
-~~~
 
 Untyped non-deterministic data can be phantom typed in order to define
 logic variables by overloading. The phantom type must be the Haskell
@@ -103,8 +87,6 @@ Threading Unique Identifiers and a Constraint Store
 
 Non-deterministic computations need a supply of unique identifiers in
 order to constrain shared choices.
-
-~~~ { .LiterateHaskell }
 
 > class Call a
 >  where
@@ -128,8 +110,6 @@ order to constrain shared choices.
 >   call f us = call (f vs) ws
 >    where (vs,ws) = splitUniqSupply us
 
-~~~
-
 We provide an operation `call` to simplify the distribution of unique
 identifiers when calling possibly non-deterministic
 operations. Non-deterministic operations may have an arbitrary number
@@ -145,39 +125,25 @@ condition fails").
 Combinators for Functional-Logic Programming
 --------------------------------------------
 
-~~~ { .LiterateHaskell }
-
 > class Unknown a
 >  where
 >   unknown :: MonadConstr Choice m => ID -> Typed m a
 
-~~~
-
 The application of `unknown` to a unique identifier represents a logic
 variable of the corresponding type.
 
-~~~ { .LiterateHaskell }
-
 > oneOf :: MonadConstr Choice m => [Typed m a] -> ID -> Typed m a
 > oneOf xs us = Typed (choice (uniqFromSupply us) (map untyped xs))
-
-~~~
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in
 the given list.
 
-~~~ { .LiterateHaskell }
-
 > failure :: MonadPlus m => Typed m a
 > failure = Typed mzero
 
-~~~
-
 A failing computation could be defined using `oneOf`, but we provide a
 special combinator that does not need a supply of unique identifiers.
-
-~~~ { .LiterateHaskell }
 
 > caseOf :: (Monad (t cs m), RunConstr cs m t)
 >        => Typed (t cs m) a
@@ -187,8 +153,6 @@ special combinator that does not need a supply of unique identifiers.
 >   (hnf,cs') <- lift (runStateT (runConstr (untyped x)) cs)
 >   untyped (branch hnf cs'))
 
-~~~
-
 The `caseOf` operation is used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
 value.
@@ -196,8 +160,6 @@ value.
 
 Converting Between Primitive and Non-Deterministic Data
 -------------------------------------------------------
-
-~~~ { .LiterateHaskell }
 
 > primitive :: Data a => NormalForm -> a
 > primitive (NormalForm con args) =
@@ -214,12 +176,8 @@ Converting Between Primitive and Non-Deterministic Data
 > typed :: (Monad m, Data a) => a -> Typed m a
 > typed = Typed . nondet . generic
 
-~~~
-
 We provide generic operations to convert between instances of the
 `Data` class and non-deterministic data.
-
-~~~ { .LiterateHaskell }
 
 > normalForm :: (RunConstr cs m t, Data a) => Typed (t cs m) a -> cs -> m a
 > normalForm x cs = liftM primitive $ evalStateT (nf (untyped x)) cs
@@ -229,8 +187,6 @@ We provide generic operations to convert between instances of the
 >   Cons typ idx args <- runConstr x
 >   nfs <- mapM nf args
 >   return (NormalForm (indexConstr typ idx) nfs)
-
-~~~
 
 The `normalForm` function evaluates a non-deterministic value and
 lifts all non-deterministic choices to the top level. The results are
