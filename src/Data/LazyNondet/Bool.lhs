@@ -4,11 +4,6 @@
 
 This module provides non-deterministic booleans.
 
-> {-# OPTIONS
->      -XFlexibleInstances
->      -XFlexibleContexts
->   #-}
->
 > module Data.LazyNondet.Bool where
 >
 > import Data.Data

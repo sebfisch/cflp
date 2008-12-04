@@ -7,10 +7,10 @@ constraints. The challenge is to define the interface such that
 instances can implement it without threading a store through monadic
 computations and shared monadic computations are evaluated only once.
 
-> {-# OPTIONS 
->      -XMultiParamTypeClasses
->      -XFlexibleInstances
->      -XExistentialQuantification
+> {-# LANGUAGE 
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       ExistentialQuantification
 >   #-}
 >
 > module Control.Monad.Constraint (

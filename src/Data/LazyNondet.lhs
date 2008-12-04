@@ -5,11 +5,11 @@
 This module provides a datatype with operations for lazy
 non-deterministic programming.
 
-> {-# OPTIONS
->      -XMultiParamTypeClasses
->      -XFlexibleContexts
->      -XFlexibleInstances
->      -XTypeFamilies
+> {-# LANGUAGE
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       FlexibleContexts,
+>       TypeFamilies
 >   #-}
 >
 > module Data.LazyNondet (
@@ -24,7 +24,8 @@ non-deterministic programming.
 >
 > ) where
 >
-> import Data.Generics
+> import Data.Data
+> import Data.Generics.Twins ( gmapAccumT ) -- from `syb` package
 >
 > import Control.Monad
 > import Control.Monad.State

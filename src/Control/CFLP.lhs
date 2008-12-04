@@ -5,11 +5,11 @@
 This module provides an interface that can be used for constraint
 functional-logic programming in Haskell.
 
-> {-# OPTIONS
->      -XMultiParamTypeClasses
->      -XFlexibleInstances
->      -XFlexibleContexts
->      -XRankNTypes
+> {-# LANGUAGE
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       FlexibleContexts,
+>       RankNTypes
 >   #-}
 >
 > module Control.CFLP (

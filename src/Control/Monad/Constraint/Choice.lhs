@@ -10,10 +10,10 @@ Based on this constraint store, we provide a function `choice` that
 can be used to generate choices that are constrained to evaluate to
 the same value if they are shared.
 
-> {-# OPTIONS
->      -XMultiParamTypeClasses
->      -XFlexibleInstances
->      -XFlexibleContexts
+> {-# LANGUAGE
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       FlexibleContexts
 >   #-}
 >
 > module Control.Monad.Constraint.Choice (
