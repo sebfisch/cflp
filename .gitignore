@@ -1,6 +1,6 @@
 .DS_Store
 dist/*
-doc/*
+src/*.html
 *.lhs.html
 *.lhs.pdf
 
