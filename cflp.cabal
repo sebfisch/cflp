@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       0.0.1
+Version:       0.0.1.9
 Cabal-Version: >= 1.2
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -13,26 +13,28 @@ License-File:  LICENSE
 Author:        Sebastian Fischer
 Maintainer:    sebf@informatik.uni-kiel.de
 Homepage:      http://www-ps.informatik.uni-kiel.de/~sebf/projects/cflp.html
-Build-Type:    Simple
+Build-Type:    Custom
 Stability:     alpha
 
 Extra-Source-Files: README, INSTALL
 
 Library
-  Build-Depends:   base, ghc, mtl, syb
-  Exposed-Modules: Control.CFLP
-  Other-Modules:   Control.Monad.Constraint,
-                   Control.Monad.Constraint.Choice,
-                   Data.LazyNondet,
-                   Data.LazyNondet.Bool,
-                   Data.LazyNondet.List
-  Hs-Source-Dirs:  src
-  Extensions:      ExistentialQuantification,
-                   MultiParamTypeClasses,
-                   FlexibleInstances,
-                   FlexibleContexts,
-                   TypeFamilies,
-                   RankNTypes
+  Build-Depends:    base, ghc, mtl, syb, HUnit
+  Exposed-Modules:  Control.CFLP
+  Other-Modules:    Control.Monad.Constraint,
+                    Control.Monad.Constraint.Choice,
+                    Data.LazyNondet,
+                    Data.LazyNondet.Bool,
+                    Data.LazyNondet.List,
+                    Control.CFLP.Tests,
+                    Control.CFLP.Tests.CallTimeChoice
+  Hs-Source-Dirs:   src
+  Extensions:       ExistentialQuantification,
+                    MultiParamTypeClasses,
+                    FlexibleInstances,
+                    FlexibleContexts,
+                    TypeFamilies,
+                    RankNTypes
 
 Source-Repository head
   type:     git

@@ -4,6 +4,11 @@
 
 This module provides non-deterministic booleans.
 
+> {-# LANGUAGE
+>       MultiParamTypeClasses,
+>       FlexibleContexts
+>   #-}
+>
 > module Data.LazyNondet.Bool where
 >
 > import Data.Data
@@ -25,3 +30,12 @@ an instance of the type class `Unknown`.
 >  where
 >   unknown = oneOf [false,true]
 
+Some functions on `Bool`s:
+
+> not :: (MonadConstr Choice (t cs m), RunConstr cs m t)
+>     => Typed (t cs m) Bool -> cs -> Typed (t cs m) Bool
+> not x = 
+>   caseOf x $ \x' _ ->
+>   case x' of
+>     Cons _ 1 _ -> true
+>     Cons _ 2 _ -> false

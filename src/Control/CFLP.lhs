@@ -14,7 +14,7 @@ functional-logic programming in Haskell.
 >
 > module Control.CFLP (
 >
->   CFLP, Evaluator, evalPrint,
+>   CFLP, Evaluator, EvalStore, eval, evalPrint,
 >
 >   depthFirst, depthFirst',
 >
