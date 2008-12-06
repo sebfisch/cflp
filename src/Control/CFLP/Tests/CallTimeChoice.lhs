@@ -1,4 +1,4 @@
-% Testing Call-Time Choice of Functional Logic Operations
+% Testing Call-Time Choice of Functional-Logic Operations
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 % December, 2008
 
