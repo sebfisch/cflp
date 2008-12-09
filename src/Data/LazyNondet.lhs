@@ -1,6 +1,5 @@
 % Lazy Non-Deterministic Data
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% November, 2008
 
 This module provides a datatype with operations for lazy
 non-deterministic programming.
@@ -14,7 +13,7 @@ non-deterministic programming.
 >
 > module Data.LazyNondet (
 >
->   NormalForm, HeadNormalForm(..), cons, Typed(..),
+>   NormalForm, HeadNormalForm(..), mkHNF, Nondet(..),
 >
 >   ID, initID, WithUnique(..), 
 >
@@ -25,7 +24,7 @@ non-deterministic programming.
 > ) where
 >
 > import Data.Data
-> import Data.Generics.Twins ( gmapAccumT ) -- from `syb` package
+> import Data.Generics.Twins ( gmapAccumT )
 >
 > import Control.Monad
 > import Control.Monad.State
@@ -33,7 +32,6 @@ non-deterministic programming.
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> -- expose `ghc` package in order to be able to import these:
 > import Unique
 > import UniqSupply
 > import UniqFM
@@ -53,15 +51,8 @@ programming we can convert between Haskell data types and the
 > data HeadNormalForm m = Cons DataType ConIndex [Untyped m]
 > type Untyped m = m (HeadNormalForm m)
 >
-> cons :: Constr -> [Untyped m] -> HeadNormalForm m
-> cons c args = Cons (constrType c) (constrIndex c) args
->
-> instance Show (HeadNormalForm [])
->  where
->   show (Cons typ idx args) 
->     | null args = show con
->     | otherwise = unwords (("("++show con):map show args++[")"])
->    where con = indexConstr typ idx
+> mkHNF :: Constr -> [Untyped m] -> HeadNormalForm m
+> mkHNF c args = Cons (constrType c) (constrIndex c) args
 
 Data in lazy functional-logic programs is evaluated on demand. The
 evaluation of arguments of a constructor may lead to different
@@ -72,19 +63,14 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-> newtype Typed m a = Typed { untyped :: Untyped m }
->
-> instance Show (Typed [] a)
->  where
->   show = show . untyped
+> newtype Nondet m a = Nondet { untyped :: Untyped m }
 
 Untyped non-deterministic data can be phantom typed in order to define
 logic variables by overloading. The phantom type must be the Haskell
 data type that should be used for conversion.
 
-
-Threading Unique Identifiers and a Constraint Store
----------------------------------------------------
+Threading Unique Identifiers
+----------------------------
 
 Non-deterministic computations need a supply of unique identifiers in
 order to constrain shared choices.
@@ -99,12 +85,12 @@ order to constrain shared choices.
 >   type Mon a :: * -> *
 >   type Typ a
 >
->   withUnique :: a -> ID -> Typed (Mon a) (Typ a)
+>   withUnique :: a -> ID -> Nondet (Mon a) (Typ a)
 >
-> instance WithUnique (Typed m a)
+> instance WithUnique (Nondet m a)
 >  where
->   type Mon (Typed m a) = m
->   type Typ (Typed m a) = a
+>   type Mon (Nondet m a) = m
+>   type Typ (Nondet m a) = a
 >
 >   withUnique = const
 >
@@ -116,52 +102,61 @@ order to constrain shared choices.
 >   withUnique f us = withUnique (f vs) ws
 >    where (vs,ws) = splitUniqSupply us
 
-We provide an operation `withUnique` to simplify the distribution of
-unique identifiers when defining possibly non-deterministic
-operations. Non-deterministic operations have an additional arguments
-for unique identifiers. The operation `withUnique` allows to consume
-an arbitrary number of unique identifiers hiding their generation.
+We provide an overloaded operation `withUnique` to simplify the
+distribution of unique identifiers when defining possibly
+non-deterministic operations. Non-deterministic operations have an
+additional argument for unique identifiers. The operation `withUnique`
+allows to consume an arbitrary number of unique identifiers hiding
+their generation. Conceptually, it has all of the following types at
+once:
+
+    Nondet m a -> ID -> Nondet m a
+    (ID -> Nondet m a) -> ID -> Nondet m a
+    (ID -> ID -> Nondet m a) -> ID -> Nondet m a
+    (ID -> ID -> ID -> Nondet m a) -> ID -> Nondet m a
+    ...
 
 We make use of type families because GHC considers equivalent
-definitions with functional dependencies illegal ("the coverage
-condition fails").
-
+definitions with functional dependencies illegal because of the overly
+restrictive "coverage condition".
 
 Combinators for Functional-Logic Programming
 --------------------------------------------
 
 > class Unknown a
 >  where
->   unknown :: MonadConstr Choice m => ID -> Typed m a
+>   unknown :: MonadConstr Choice m => ID -> Nondet m a
 
 The application of `unknown` to a unique identifier represents a logic
 variable of the corresponding type.
 
-> oneOf :: MonadConstr Choice m => [Typed m a] -> ID -> Typed m a
-> oneOf xs us = Typed (choice (uniqFromSupply us) (map untyped xs))
+> oneOf :: MonadConstr Choice m => [Nondet m a] -> ID -> Nondet m a
+> oneOf xs us = Nondet (choice (uniqFromSupply us) (map untyped xs))
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in
 the given list.
 
-> failure :: MonadPlus m => Typed m a
-> failure = Typed mzero
+> failure :: MonadPlus m => Nondet m a
+> failure = Nondet mzero
 
 A failing computation could be defined using `oneOf`, but we provide a
 special combinator that does not need a supply of unique identifiers.
 
-> caseOf :: (Monad (t cs m), RunConstr cs m t)
->        => Typed (t cs m) a
->        -> (HeadNormalForm (t cs m) -> cs -> Typed (t cs m) b)
->        -> cs -> Typed (t cs m) b
-> caseOf x branch cs = Typed (do
->   (hnf,cs') <- lift (runStateT (runConstr (untyped x)) cs)
+> caseOf :: (Monad m, MonadSolve cs m m)
+>        => Nondet m a
+>        -> (HeadNormalForm m -> cs -> Nondet m b)
+>        -> cs -> Nondet m b
+> caseOf x branch cs = Nondet (do
+>   (hnf,cs') <- runStateT (solve (untyped x)) cs
 >   untyped (branch hnf cs'))
 
 The `caseOf` operation is used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
-value.
-
+value. An updated constraint store is passed to the computation of the
+branch function. Collected constraints are kept attached to the
+computed value by using an appropriate instance of `MonadSolve` that
+does not eliminate them.
 
 Converting Between Primitive and Non-Deterministic Data
 -------------------------------------------------------
@@ -175,21 +170,21 @@ Converting Between Primitive and Non-Deterministic Data
 > generic :: Data a => a -> NormalForm
 > generic x = NormalForm (toConstr x) (gmapQ generic x)
 >
-> nondet :: Monad m => NormalForm -> Untyped m
-> nondet (NormalForm con args) = return (cons con (map nondet args))
+> hnf :: Monad m => NormalForm -> Untyped m
+> hnf (NormalForm con args) = return (mkHNF con (map hnf args))
 >
-> typed :: (Monad m, Data a) => a -> Typed m a
-> typed = Typed . nondet . generic
+> nondet :: (Monad m, Data a) => a -> Nondet m a
+> nondet = Nondet . hnf . generic
 
 We provide generic operations to convert between instances of the
 `Data` class and non-deterministic data.
 
-> normalForm :: (RunConstr cs m t, Data a) => Typed (t cs m) a -> cs -> m a
+> normalForm :: (MonadSolve cs m m', Data a) => Nondet m a -> cs -> m' a
 > normalForm x cs = liftM primitive $ evalStateT (nf (untyped x)) cs
 >
-> nf :: RunConstr cs m t => Untyped (t cs m) -> StateT cs m NormalForm
+> nf :: MonadSolve cs m m' => Untyped m -> StateT cs m' NormalForm
 > nf x = do
->   Cons typ idx args <- runConstr x
+>   Cons typ idx args <- solve x
 >   nfs <- mapM nf args
 >   return (NormalForm (indexConstr typ idx) nfs)
 
@@ -197,4 +192,28 @@ The `normalForm` function evaluates a non-deterministic value and
 lifts all non-deterministic choices to the top level. The results are
 deterministic values and can be converted into their Haskell
 representation.
+
+> instance Show (HeadNormalForm [])
+>  where
+>   show (Cons typ idx args) 
+>     | null args = show con
+>     | otherwise = unwords (("("++show con):map show args++[")"])
+>    where con = indexConstr typ idx
+>
+> instance Show (Nondet [] a)
+>  where
+>   show = show . untyped
+>
+> instance Show (Nondet (ConstrT cs []) a)
+>  where
+>   show = show . untyped
+>
+> instance Show (HeadNormalForm (ConstrT cs []))
+>  where
+>   show (Cons typ idx [])   = show (indexConstr typ idx)
+>   show (Cons typ idx args) =
+>     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 
+
+To simplify debugging, we provide `Show` instances for head-normal
+forms and non-deterministic values.
 

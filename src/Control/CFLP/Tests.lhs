@@ -1,6 +1,5 @@
 % Testing the `cflp` Package
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% December, 2008
 
 This module defines auxiiary functions for the test suite.
 
@@ -14,12 +13,28 @@ We use HUnit for testing because we need to test IO actions and want
 to use errors when testing laziness.
 
 > assertResults :: (Data a, Show a, Eq a)
->               => (EvalStore -> ID -> Typed (ConstrT EvalStore []) a)
+>               => (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
 >               -> [a] -> Assertion
-> assertResults op expected = do
+> assertResults = assertResultsLimit Nothing
+>
+> assertResultsN 
+>   :: (Data a, Show a, Eq a)
+>   => Int
+>   -> (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
+>   -> [a] -> Assertion
+> assertResultsN = assertResultsLimit . Just
+>
+> assertResultsLimit 
+>   :: (Data a, Show a, Eq a)
+>   => Maybe Int
+>   -> (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
+>   -> [a] -> Assertion
+> assertResultsLimit limit op expected = do
 >   actual <- eval depthFirst op
->   actual @?= expected
+>   maybe id take limit actual @?= expected
 
-We provide an auxiliary assertion `assertResults` that computes the
-non-deterministic results of a functional logic computation in depth
-first order and compares them with a list of given expected results.
+We provide auxiliary assertions `assertResults...` that compute (a
+possibly limited number of) non-deterministic results of a functional
+logic computation in depth-first order and compare them with a list of
+given expected results.
+

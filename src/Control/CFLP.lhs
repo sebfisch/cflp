@@ -1,6 +1,5 @@
 % Constraint Functional-Logic Programming
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% November, 2008
 
 This module provides an interface that can be used for constraint
 functional-logic programming in Haskell.
@@ -14,9 +13,9 @@ functional-logic programming in Haskell.
 >
 > module Control.CFLP (
 >
->   CFLP, Evaluator, EvalStore, eval, evalPrint,
+>   CFLP, EvalStore, eval, evalPrint,
 >
->   depthFirst, depthFirst',
+>   Strategy, depthFirst,
 >
 >   module Data.LazyNondet,
 >   module Data.LazyNondet.Bool,
@@ -32,10 +31,18 @@ functional-logic programming in Haskell.
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> class (MonadConstr Choice (t cs m), RunConstr cs m t) => CFLP cs t m
+> class (MonadConstr Choice m,
+>        ConstraintStore Choice cs,
+>        MonadSolve cs m m)
+>  => CFLP cs m
 
 The type class `CFLP` is a shortcut for the type-class constraints on
 constraint functional-logic operations.
+
+> instance CFLP ChoiceStore (ConstrT ChoiceStore [])
+
+We declare instances for every combination of monad and constraint
+store that we intend to use.
 
 > type EvalStore = ChoiceStore
 >
@@ -43,40 +50,34 @@ constraint functional-logic operations.
 > noConstraints = noChoices
 
 Currently, the constraint store used to evaluate constraint
-functional-logic program is simply a `ChoiceStore`. It will be a
+functional-logic programs is simply a `ChoiceStore`. It will be a
 combination of different constraint stores, when more constraint
 solvers have been implemented.
 
-> newtype CFLP EvalStore t m => Evaluator t m
->  = Eval { enumerate :: forall a . m a -> [a] }
+> type Strategy m = forall a . m a -> [a]
 
-An `Evaluator` specifies via phantom types which constraint collecting
-monad to use. It wraps an enumeration function that collects
-non-deterministic results in a list.
+A `Strategy` specifies how to enumerate non-deterministic results in a
+list.
 
-> instance CFLP ChoiceStore ConstrT []
->
-> depthFirst :: Evaluator ConstrT []
-> depthFirst = Eval id
->
-> instance CFLP ChoiceStore StateT []
->
-> depthFirst' :: Evaluator StateT []
-> depthFirst' = Eval id
+> depthFirst :: Strategy []
+> depthFirst = id
 
-With a transformed list monad we get depth first search.
+The strategy of the list monad is depth-first search.
 
-> eval :: (CFLP EvalStore t m, Data a)
->      => Evaluator t m -> (EvalStore -> ID -> Typed (t EvalStore m) a)
+> eval :: (CFLP EvalStore m, MonadSolve EvalStore m m', Data a)
+>      => Strategy m' -> (EvalStore -> ID -> Nondet m a)
 >      -> IO [a]
-> eval e op = do
+> eval enumerate op = do
 >   i <- initID
->   return (enumerate e (normalForm (op noConstraints i) noConstraints))
+>   return (enumerate (normalForm (op noConstraints i) noConstraints))
 
 The `eval` function enumerates the non-deterministic solutions of a
-constraint functional-logic computation.
+constraint functional-logic computation according to a given strategy.
 
-> evalPrint e op = eval e op >>= printSols
+> evalPrint :: (CFLP EvalStore m, MonadSolve EvalStore m m', Data a, Show a)
+>           => Strategy m' -> (EvalStore -> ID -> Nondet m a)
+>           -> IO ()
+> evalPrint s op = eval s op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
@@ -89,3 +90,4 @@ constraint functional-logic computation.
 For convenience, we provide an `evalPrint` operation that
 interactively shows solutions of a constraint functional-logic
 computation.
+

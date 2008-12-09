@@ -1,6 +1,5 @@
 % Sharing Choices with Constraints
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% November, 2008
 
 We define a constraint store that stores choice constraints which
 ensure that shared non-deterministic choices evaluate to the same
@@ -26,7 +25,6 @@ the same value if they are shared.
 > import Control.Monad.State
 > import Control.Monad.Constraint
 >
-> -- expose `ghc` package in order to be able to import these:
 > import Unique
 > import UniqSupply
 > import UniqFM

@@ -1,6 +1,5 @@
 % Lazy Non-Deterministic Bools
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% November, 2008
 
 This module provides non-deterministic booleans.
 
@@ -17,11 +16,11 @@ This module provides non-deterministic booleans.
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> true :: Monad m => Typed m Bool
-> true = Typed (return (cons (toConstr True) []))
+> true :: Monad m => Nondet m Bool
+> true = Nondet (return (mkHNF (toConstr True) []))
 >
-> false :: Monad m => Typed m Bool
-> false = Typed (return (cons (toConstr False) []))
+> false :: Monad m => Nondet m Bool
+> false = Nondet (return (mkHNF (toConstr False) []))
 
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.
@@ -32,8 +31,7 @@ an instance of the type class `Unknown`.
 
 Some functions on `Bool`s:
 
-> not :: (MonadConstr Choice (t cs m), RunConstr cs m t)
->     => Typed (t cs m) Bool -> cs -> Typed (t cs m) Bool
+> not :: MonadSolve cs m m => Nondet m Bool -> cs -> Nondet m Bool
 > not x = 
 >   caseOf x $ \x' _ ->
 >   case x' of

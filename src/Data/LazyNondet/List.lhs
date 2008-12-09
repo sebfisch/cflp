@@ -1,6 +1,5 @@
 % Lazy Non-Deterministic Lists
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
-% November, 2008
 
 This module provides non-deterministic lists.
 
@@ -8,14 +7,25 @@ This module provides non-deterministic lists.
 >
 > import Data.Data
 > import Data.LazyNondet
+> import Data.LazyNondet.Bool
 >
-> nil :: Monad m => Typed m [a]
-> nil = Typed (return (cons (toConstr ([]::[()])) []))
+> import Control.Monad.Constraint
 >
-> (^:) :: Monad m => Typed m a -> Typed m [a] -> Typed m [a]
-> x^:xs = Typed (return (cons (toConstr [()]) [untyped x, untyped xs]))
+> nil :: Monad m => Nondet m [a]
+> nil = Nondet (return (mkHNF (toConstr ([]::[()])) []))
 >
-> fromList :: Monad m => [Typed m a] -> Typed m [a]
+> infixr 5 ^:
+> (^:) :: Monad m => Nondet m a -> Nondet m [a] -> Nondet m [a]
+> x^:xs = Nondet (return (mkHNF (toConstr [()]) [untyped x, untyped xs]))
+>
+> null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
+> null xs =
+>   caseOf xs $ \xs' _ ->
+>   case xs' of
+>     Cons _ 1 _ -> true
+>     _ -> false
+>
+> fromList :: Monad m => [Nondet m a] -> Nondet m [a]
 > fromList = foldr (^:) nil
 
 We can use logic variables of a list type if there are logic variables
