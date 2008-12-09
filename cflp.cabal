@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       0.0.2
+Version:       0.0.2.1
 Cabal-Version: >= 1.2
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -19,7 +19,7 @@ Stability:     alpha
 Extra-Source-Files: README, INSTALL
 
 Library
-  Build-Depends:    base, ghc, mtl, syb, HUnit
+  Build-Depends:    base >= 4, ghc, mtl, syb, HUnit
   Exposed-Modules:  Control.CFLP
   Other-Modules:    Control.Monad.Constraint,
                     Control.Monad.Constraint.Choice,

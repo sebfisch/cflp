@@ -1,17 +1,16 @@
 # Installation Instructions
 
-## Installation with Cabal
-
-You can install the `cflp` package using Cabal as follows.
+You can install the `cflp` package as follows.
 
  1. Unpack the sources and move into the source directory.
 
         > tar -xzf cflp-*.tar.gz
         > cd cflp-*
 
- 2. Run configure, build and install.
+ 2. Run configure, build, test, and install.
 
-        > ./Setup.lhs configure --user
-        > ./Setup.lhs build
-        > ./Setup.lhs install
+        > runhaskell Setup.lhs configure --user
+        > runhaskell Setup.lhs build
+        > runhaskell Setup.lhs test
+        > runhaskell Setup.lhs install
 
