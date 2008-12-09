@@ -15,7 +15,7 @@ results have to be as if they were executed eagerly.
 > import Control.CFLP
 > import Control.Monad.Constraint
 >
-> import Prelude hiding ( not, null )
+> import Prelude hiding ( not, null, head )
 >
 > tests :: Test
 > tests = "call-time choice" ~: test
@@ -69,14 +69,15 @@ definition of the function `two`) there must not be demand on
 something that is shared.
 
 > sharedCompoundTerms :: Assertion
-> sharedCompoundTerms = assertResults comp [[True,True],[False,False]]
+> sharedCompoundTerms = assertResults comp [[True,False],[False,True]]
 >  where
 >   comp cs u = negHeads (unknown u) cs
 >
 > negHeads :: CFLP cs m => Nondet m [Bool] -> cs -> Nondet m [Bool]
-> negHeads l =
->   caseOf l $ \l' cs ->
->   case l' of
->     Cons _ 1 _ -> failure
->     Cons _ 2 [x',xs'] -> let x = Nondet x'
->                           in not x cs ^: not x cs ^: nil
+> negHeads l cs = not (head l cs) cs ^: head l cs ^: nil
+
+This test checks whether sharing is ensured on aruments of compound
+terms even if they are consumed. In this example, the variable `l` is
+shared, so the heads that are computed twice must be equal and the
+negated head must be different from the head.
+

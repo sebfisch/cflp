@@ -17,10 +17,10 @@ This module provides non-deterministic booleans.
 > import Control.Monad.Constraint.Choice
 >
 > true :: Monad m => Nondet m Bool
-> true = Nondet (return (mkHNF (toConstr True) []))
+> true = Typed (return (mkHNF (toConstr True) []))
 >
 > false :: Monad m => Nondet m Bool
-> false = Nondet (return (mkHNF (toConstr False) []))
+> false = Typed (return (mkHNF (toConstr False) []))
 
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.
@@ -29,7 +29,7 @@ an instance of the type class `Unknown`.
 >  where
 >   unknown = oneOf [false,true]
 
-Some functions on `Bool`s:
+Some operations on `Bool`s:
 
 > not :: MonadSolve cs m m => Nondet m Bool -> cs -> Nondet m Bool
 > not x = 

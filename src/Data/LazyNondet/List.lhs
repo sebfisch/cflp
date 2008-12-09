@@ -12,18 +12,11 @@ This module provides non-deterministic lists.
 > import Control.Monad.Constraint
 >
 > nil :: Monad m => Nondet m [a]
-> nil = Nondet (return (mkHNF (toConstr ([]::[()])) []))
+> nil = Typed (return (mkHNF (toConstr ([]::[()])) []))
 >
 > infixr 5 ^:
 > (^:) :: Monad m => Nondet m a -> Nondet m [a] -> Nondet m [a]
-> x^:xs = Nondet (return (mkHNF (toConstr [()]) [untyped x, untyped xs]))
->
-> null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
-> null xs =
->   caseOf xs $ \xs' _ ->
->   case xs' of
->     Cons _ 1 _ -> true
->     _ -> false
+> x^:xs = Typed (return (mkHNF (toConstr [()]) [untyped x, untyped xs]))
 >
 > fromList :: Monad m => [Nondet m a] -> Nondet m [a]
 > fromList = foldr (^:) nil
@@ -36,3 +29,25 @@ for the element type.
 >   unknown = withUnique $ \u1 u2 -> 
 >              oneOf [nil, unknown u1 ^: unknown u2]
 
+Some operations on lists:
+
+> null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
+> null xs =
+>   caseOf xs $ \xs' _ ->
+>   case xs' of
+>     Cons _ 1 _ -> true
+>     _ -> false
+>
+> head :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m a
+> head l =
+>   caseOf l $ \l' cs ->
+>   case l' of
+>     Cons _ 1 _ -> failure
+>     Cons _ 2 [x',_] -> Typed x'
+>
+> tail :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m [a]
+> tail l =
+>   caseOf l $ \l' cs ->
+>   case l' of
+>     Cons _ 1 _ -> failure
+>     Cons _ 2 [_,xs'] -> Typed xs'

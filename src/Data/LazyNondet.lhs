@@ -63,7 +63,7 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-> newtype Nondet m a = Nondet { untyped :: Untyped m }
+> newtype Nondet m a = Typed { untyped :: Untyped m }
 
 Untyped non-deterministic data can be phantom typed in order to define
 logic variables by overloading. The phantom type must be the Haskell
@@ -117,7 +117,7 @@ once:
     ...
 
 We make use of type families because GHC considers equivalent
-definitions with functional dependencies illegal because of the overly
+definitions with functional dependencies illegal due to the overly
 restrictive "coverage condition".
 
 Combinators for Functional-Logic Programming
@@ -131,14 +131,14 @@ The application of `unknown` to a unique identifier represents a logic
 variable of the corresponding type.
 
 > oneOf :: MonadConstr Choice m => [Nondet m a] -> ID -> Nondet m a
-> oneOf xs us = Nondet (choice (uniqFromSupply us) (map untyped xs))
+> oneOf xs us = Typed (choice (uniqFromSupply us) (map untyped xs))
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in
 the given list.
 
 > failure :: MonadPlus m => Nondet m a
-> failure = Nondet mzero
+> failure = Typed mzero
 
 A failing computation could be defined using `oneOf`, but we provide a
 special combinator that does not need a supply of unique identifiers.
@@ -147,7 +147,7 @@ special combinator that does not need a supply of unique identifiers.
 >        => Nondet m a
 >        -> (HeadNormalForm m -> cs -> Nondet m b)
 >        -> cs -> Nondet m b
-> caseOf x branch cs = Nondet (do
+> caseOf x branch cs = Typed (do
 >   (hnf,cs') <- runStateT (solve (untyped x)) cs
 >   untyped (branch hnf cs'))
 
@@ -161,11 +161,11 @@ does not eliminate them.
 Converting Between Primitive and Non-Deterministic Data
 -------------------------------------------------------
 
-> primitive :: Data a => NormalForm -> a
-> primitive (NormalForm con args) =
+> prim :: Data a => NormalForm -> a
+> prim (NormalForm con args) =
 >   snd (gmapAccumT perkid args (fromConstr con))
 >  where
->   perkid (t:ts) _ = (ts, primitive t)
+>   perkid (t:ts) _ = (ts, prim t)
 >
 > generic :: Data a => a -> NormalForm
 > generic x = NormalForm (toConstr x) (gmapQ generic x)
@@ -174,13 +174,13 @@ Converting Between Primitive and Non-Deterministic Data
 > hnf (NormalForm con args) = return (mkHNF con (map hnf args))
 >
 > nondet :: (Monad m, Data a) => a -> Nondet m a
-> nondet = Nondet . hnf . generic
+> nondet = Typed . hnf . generic
 
 We provide generic operations to convert between instances of the
 `Data` class and non-deterministic data.
 
 > normalForm :: (MonadSolve cs m m', Data a) => Nondet m a -> cs -> m' a
-> normalForm x cs = liftM primitive $ evalStateT (nf (untyped x)) cs
+> normalForm x cs = liftM prim $ evalStateT (nf (untyped x)) cs
 >
 > nf :: MonadSolve cs m m' => Untyped m -> StateT cs m' NormalForm
 > nf x = do

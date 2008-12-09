@@ -30,7 +30,7 @@ computations and shared monadic computations are evaluated only once.
 >  where
 >   assert :: (MonadState cs m, MonadPlus m) => c -> m ()
 
-Constraint Stores provides an operation to assert a constraint into a
+Constraint Stores provide an operation to assert a constraint into a
 store. The constraint store is manipulated in an instance of
 `MonadState`. The `assert` operation may fail or branch depending on
 the given constraint or the current store and is, hence, performed in
@@ -61,7 +61,7 @@ constrained with constraints that are supported by the threaded store.
 >   solve :: m a -> StateT cs m' a
 
 We also define an interface for monads that can solve associated
-constraints by threading a constraint store through a (possibly but
+constraints by threading a constraint store through a (possibly, but
 not necessarily different) monad.
 
 We use the state monad transformer `StateT` to thread the constraint
@@ -164,7 +164,7 @@ instance of `MonadPlus` if the base monad is, and that, `ConstrT`
 >   show (Return x) = "(Return "++show x++")"
 >   show (Constr _ (ConstrT x)) = "(Constr _ "++show x++")"
 
-To simplify debugging we define `Show` instances for transformed list
+To simplify debugging, we define `Show` instances for transformed list
 monads. Unfortunately, I don't know an easy way to show collected
 constraints, because their type is not determined by the constraint
 store and not mentioned in the signature of the instances.
