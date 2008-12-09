@@ -16,7 +16,7 @@ Homepage:      http://www-ps.informatik.uni-kiel.de/~sebf/projects/cflp.html
 Build-Type:    Custom
 Stability:     alpha
 
-Extra-Source-Files: README, INSTALL
+Extra-Source-Files: README, INSTALL, Test.lhs
 
 Library
   Build-Depends:    base >= 4, ghc, mtl, syb, HUnit
