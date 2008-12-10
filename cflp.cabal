@@ -35,8 +35,8 @@ Library
                     FlexibleContexts,
                     TypeFamilies,
                     RankNTypes
+  Ghc-Options:      -Wall -fno-warn-orphans
 
 Source-Repository head
   type:     git
   location: git://github.com/sebfisch/cflp.git
-

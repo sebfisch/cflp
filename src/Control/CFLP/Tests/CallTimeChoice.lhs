@@ -13,7 +13,6 @@ results have to be as if they were executed eagerly.
 > import Test.HUnit
 >
 > import Control.CFLP
-> import Control.Monad.Constraint
 >
 > import Prelude hiding ( not, null, head )
 >

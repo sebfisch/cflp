@@ -21,12 +21,10 @@ the same value if they are shared.
 >
 > ) where
 >
-> import Control.Monad
 > import Control.Monad.State
 > import Control.Monad.Constraint
 >
 > import Unique
-> import UniqSupply
 > import UniqFM
 
 We borrow unique identifiers from the package `ghc` which is hidden by

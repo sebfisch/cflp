@@ -14,9 +14,17 @@ This module provides non-deterministic lists.
 > nil :: Monad m => Nondet m [a]
 > nil = Typed (return (mkHNF (toConstr ([]::[()])) []))
 >
+> pNil :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
+> pNil alt = (constrIndex (toConstr ([]::[()])), Branch . alt)
+>
 > infixr 5 ^:
 > (^:) :: Monad m => Nondet m a -> Nondet m [a] -> Nondet m [a]
 > x^:xs = Typed (return (mkHNF (toConstr [()]) [untyped x, untyped xs]))
+>
+> pCons :: (Nondet m a -> Nondet m [a] -> cs -> Nondet m b)
+>       -> (ConIndex, cs -> Branch m b)
+> pCons alt = ( constrIndex (toConstr [()])
+>             , \cs -> Branch (\x xs -> alt x xs cs))
 >
 > fromList :: Monad m => [Nondet m a] -> Nondet m [a]
 > fromList = foldr (^:) nil
@@ -32,22 +40,11 @@ for the element type.
 Some operations on lists:
 
 > null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
-> null xs =
->   caseOf xs $ \xs' _ ->
->   case xs' of
->     Cons _ 1 _ -> true
->     _ -> false
+> null xs = caseOf xs [pNil (\_ -> true), pCons (\_ _ _ -> false)]
 >
 > head :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m a
-> head l =
->   caseOf l $ \l' cs ->
->   case l' of
->     Cons _ 1 _ -> failure
->     Cons _ 2 [x',_] -> Typed x'
+> head l = caseOf l [pCons (\x _ _ -> x)]
 >
 > tail :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m [a]
-> tail l =
->   caseOf l $ \l' cs ->
->   case l' of
->     Cons _ 1 _ -> failure
->     Cons _ 2 [_,xs'] -> Typed xs'
+> tail l = caseOf l [pCons (\_ xs _ -> xs)]
+

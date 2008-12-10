@@ -1,7 +1,7 @@
 % Testing the `cflp` Package
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
-This module defines auxiiary functions for the test suite.
+This module defines auxiliary functions for the test suite.
 
 > module Control.CFLP.Tests where
 >
