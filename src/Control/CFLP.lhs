@@ -13,7 +13,7 @@ functional-logic programming in Haskell.
 >
 > module Control.CFLP (
 >
->   CFLP, EvalStore, eval, evalPrint,
+>   CFLP, Computation, eval, evalPrint,
 >
 >   Strategy, depthFirst,
 >
@@ -50,6 +50,8 @@ store that we intend to use.
 >
 > noConstraints :: EvalStore
 > noConstraints = noChoices
+>
+> type Computation m a = EvalStore -> ID -> Nondet (ConstrT EvalStore m) a
 
 Currently, the constraint store used to evaluate constraint
 functional-logic programs is simply a `ChoiceStore`. It will be a
@@ -85,9 +87,13 @@ constraint functional-logic computation according to a given strategy.
 > printSols []     = putStrLn "No more solutions."
 > printSols (x:xs) = do
 >   print x
->   putStr "more? [Y|n]: "
+>   putStr "more? [Y(es)|n(o)|a(ll)]: "
 >   s <- getLine
->   if s `elem` ["n","no"] then return () else printSols xs
+>   if s `elem` ["n","no"] then
+>     return ()
+>    else if s `elem` ["a","all"]
+>     then mapM_ print xs
+>     else printSols xs
 
 For convenience, we provide an `evalPrint` operation that
 interactively shows solutions of a constraint functional-logic

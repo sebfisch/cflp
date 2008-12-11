@@ -19,11 +19,13 @@ non-deterministic programming.
 >
 >   ID, initID, withUnique,
 >
->   Unknown(..), failure, oneOf, withHNF, caseOf, caseOf_, Branch(..),
+>   Unknown(..), failure, oneOf, withHNF, caseOf, caseOf_, Match,
 >
 >   Data, nondet, normalForm,
 >
->   DataConstr(..), cons, decons
+>   ConsRep(..), cons, match,
+>
+>   prim_eq
 >
 > ) where
 >
@@ -150,9 +152,9 @@ special combinator that does not need a supply of unique identifiers.
 >         => Nondet m a
 >         -> (HeadNormalForm m -> cs -> Nondet m b)
 >         -> cs -> Nondet m b
-> withHNF x branch cs = Typed (do
+> withHNF x b cs = Typed (do
 >   (hnf,cs') <- runStateT (solve (untyped x)) cs
->   untyped (branch hnf cs'))
+>   untyped (b hnf cs'))
 
 The `withHNF` operation can be used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
@@ -162,20 +164,21 @@ computed value by using an appropriate instance of `MonadSolve` that
 does not eliminate them.
 
 > caseOf :: MonadSolve cs m m
->        => Nondet m a -> [(ConIndex, cs -> Branch m b)] -> cs -> Nondet m b
+>        => Nondet m a -> [Match cs m b] -> cs -> Nondet m b
 > caseOf x bs = caseOf_ x bs failure
 >
 > caseOf_ :: MonadSolve cs m m
->         => Nondet m a -> [(ConIndex, cs -> Branch m b)] -> Nondet m b
->         -> cs -> Nondet m b
+>         => Nondet m a -> [Match cs m b] -> Nondet m b -> cs -> Nondet m b
 > caseOf_ x bs def =
 >   withHNF x $ \ (Cons _ idx args) cs ->
->                  maybe def (\b -> match (b cs) args) (lookup idx bs)
+>                  maybe def (\b -> branch (b cs) args)
+>                   (lookup idx (map unMatch bs))
 >
+> newtype Match cs m a = Match { unMatch :: (ConIndex, cs -> Branch m a) }
 > data Branch m a = forall t . (WithUntyped t, m ~ M t, a ~ T t) => Branch t
 >
-> match :: Branch m a -> [Untyped m] -> Nondet m a
-> match (Branch alt) = withUntyped alt
+> branch :: Branch m a -> [Untyped m] -> Nondet m a
+> branch (Branch alt) = withUntyped alt
 
 We provide operations `caseOf` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped
@@ -287,33 +290,52 @@ Syntactic Sugar for Datatype Declarations
 The overloaded operation `constr` takes a Haskell constructor and yields
 a corresponding constructor function for non-deterministic values.
 
-> decons :: (DataConstr a, WithUntyped b)
->        => a -> (cs -> b) -> (ConIndex, cs -> Branch (M b) (T b))
-> decons c alt = (constrIndex (dataConstr c), Branch . alt)
+> match :: (ConsRep a, WithUntyped b)
+>       => a -> (cs -> b) -> Match cs (M b) (T b)
+> match c alt = Match (constrIndex (consRep c), Branch . alt)
 
 The operation `decons` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
 
-> class DataConstr a
+> class ConsRep a
 >  where
->   dataConstr :: a -> Constr
+>   consRep :: a -> Constr
 >
-> instance DataConstr b => DataConstr (a -> b)
+> instance ConsRep b => ConsRep (a -> b)
 >  where
->   dataConstr c = dataConstr (c undefined)
+>   consRep c = consRep (c undefined)
 
-We provide an overloaded operation `dataConstr` that yields a `Constr`
+We provide an overloaded operation `consRep` that yields a `Constr`
 representation for a constructor rather than for a constructed value
 like `Data.Data.toConstr` does. We do not provide the base instance
 
-    instance Data a => DataConstr a
+    instance Data a => ConsRep a
      where
-      dataConstr = toConstr
+      consRep = toConstr
 
 because this would require to allow undecidable instances. As a
 consequence, specialized base instances need to be defined for every
-used datatype. See `Data.LazyNondet.List` for an example of how to use
-`dataConstr` to get the representation of polymorphic constructors.
+used datatype. See `Data.LazyNondet.List` for an example of how to get
+the representation of polymorphic constructors and destructors.
+
+Primitive Generic Functions
+---------------------------
+
+> prim_eq :: MonadSolve cs m m => Untyped m -> Untyped m -> StateT cs m Bool
+> prim_eq x y = do
+>   Cons _ ix xs <- solve x
+>   Cons _ iy ys <- solve y
+>   if ix==iy then all_eq xs ys else return False
+>  where
+>   all_eq [] [] = return True
+>   all_eq (v:vs) (w:ws) = do
+>     eq <- prim_eq v w
+>     if eq then all_eq vs ws else return False
+>   all_eq _ _ = return False
+
+We provide a generic comparison function for untyped non-deterministic
+data that is used to define a typed equality test in the
+`Data.LazyNondet.Bool` module.
 
 `Show` Instances
 ----------------

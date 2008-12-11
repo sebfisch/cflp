@@ -2,9 +2,9 @@
 
 The `cflp` package provides a module `Control.CFLP` with combinators
 for constraint functional-logic programming ((C)FLP) in Haskell. The
-combinators can be used as a target language for compiling programs
-written in an FLP language like Curry or Toy. Another application of
-FLP is demand driven test-case generation.
+combinators might later be used as a target language for compiling
+programs written in an FLP language like Curry or Toy. Another
+application of FLP is demand driven test-case generation.
 
 Consult the LICENSE file for copyright issues, the INSTALL file for
 installation instructions, or the [project website][cflp] for

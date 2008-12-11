@@ -1,12 +1,13 @@
 Name:          cflp
-Version:       0.0.2.1
+Version:       0.1
 Cabal-Version: >= 1.2
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
                functional-logic programming ((C)FLP) in Haskell. The 
-               combinators can be used as a target language for compiling 
-               programs written in an FLP language like Curry or Toy. Another 
-               application of FLP is demand driven test-case generation.
+               combinators might later be used as a target language for 
+               compiling programs written in an FLP language like Curry 
+               or Toy. Another application of FLP is demand driven 
+               test-case generation.
 Category:      Control
 License:       BSD3
 License-File:  LICENSE
@@ -35,7 +36,7 @@ Library
                     FlexibleContexts,
                     TypeFamilies,
                     RankNTypes
-  Ghc-Options:      -Wall -fno-warn-orphans
+  Ghc-Options:      -O2 -Wall -fno-warn-orphans
 
 Source-Repository head
   type:     git

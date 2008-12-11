@@ -15,21 +15,20 @@ This module provides non-deterministic lists.
 >
 > import Control.Monad.Constraint
 >
-> instance DataConstr [()] where dataConstr = toConstr
+> instance ConsRep [()] where consRep = toConstr
 >
 > nil :: Monad m => Nondet m [a]
 > nil = cons ([] :: [()])
 >
-> dNil :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> dNil = decons ([] :: [()])
+> pNil :: (cs -> Nondet m a) -> Match cs m a
+> pNil = match ([] :: [()])
 >
 > infixr 5 ^:
 > (^:) :: Monad m => Nondet m a -> Nondet m [a] -> Nondet m [a]
 > (^:) = cons ((:) :: () -> [()] -> [()])
 >
-> dCons :: (cs -> Nondet m a -> Nondet m [a] -> Nondet m b)
->       -> (ConIndex, cs -> Branch m b)
-> dCons = decons ((:) :: () -> [()] -> [()])
+> pCons :: (cs -> Nondet m a -> Nondet m [a] -> Nondet m b) -> Match cs m b
+> pCons = match ((:) :: () -> [()] -> [()])
 >
 > fromList :: Monad m => [Nondet m a] -> Nondet m [a]
 > fromList = foldr (^:) nil
@@ -45,11 +44,11 @@ for the element type.
 Some operations on lists:
 
 > null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
-> null xs = caseOf xs [dNil (\_ -> true), dCons (\_ _ _ -> false)]
+> null xs = caseOf_ xs [pNil (\_ -> true)] false
 >
 > head :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m a
-> head l = caseOf l [dCons (\_ x _ -> x)]
+> head l = caseOf l [pCons (\_ x _ -> x)]
 >
 > tail :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m [a]
-> tail l = caseOf l [dCons (\_ _ xs -> xs)]
+> tail l = caseOf l [pCons (\_ _ xs -> xs)]
 

@@ -1,4 +1,6 @@
 .DS_Store
+*.hi
+*.o
 dist/*
 src/*.html
 *.lhs.html

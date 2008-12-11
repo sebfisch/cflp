@@ -6,29 +6,21 @@ This module defines auxiliary functions for the test suite.
 > module Control.CFLP.Tests where
 >
 > import Control.CFLP
-> import Control.Monad.Constraint
 > import Test.HUnit
 
 We use HUnit for testing because we need to test IO actions and want
 to use errors when testing laziness.
 
 > assertResults :: (Data a, Show a, Eq a)
->               => (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
->               -> [a] -> Assertion
+>               => (Computation [] a) -> [a] -> Assertion
 > assertResults = assertResultsLimit Nothing
 >
-> assertResultsN 
->   :: (Data a, Show a, Eq a)
->   => Int
->   -> (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
->   -> [a] -> Assertion
+> assertResultsN :: (Data a, Show a, Eq a)
+>                => Int -> (Computation [] a) -> [a] -> Assertion
 > assertResultsN = assertResultsLimit . Just
 >
-> assertResultsLimit 
->   :: (Data a, Show a, Eq a)
->   => Maybe Int
->   -> (EvalStore -> ID -> Nondet (ConstrT EvalStore []) a)
->   -> [a] -> Assertion
+> assertResultsLimit :: (Data a, Show a, Eq a)
+>                    => Maybe Int -> (Computation [] a) -> [a] -> Assertion
 > assertResultsLimit limit op expected = do
 >   actual <- eval depthFirst op
 >   maybe id take limit actual @?= expected
