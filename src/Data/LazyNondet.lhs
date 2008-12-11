@@ -23,7 +23,7 @@ non-deterministic programming.
 >
 >   Data, nondet, normalForm,
 >
->   DataConstr(..), cons, branch
+>   DataConstr(..), cons, decons
 >
 > ) where
 >
@@ -284,14 +284,14 @@ Syntactic Sugar for Datatype Declarations
 > cons :: MkCons m a b => a -> b
 > cons c = mkCons c []
 
-The overloaded operation `cons` takes a Haskell constructor and yields
+The overloaded operation `constr` takes a Haskell constructor and yields
 a corresponding constructor function for non-deterministic values.
 
-> branch :: (DataConstr a, WithUntyped b)
+> decons :: (DataConstr a, WithUntyped b)
 >        => a -> (cs -> b) -> (ConIndex, cs -> Branch (M b) (T b))
-> branch c alt = (constrIndex (dataConstr c), Branch . alt)
+> decons c alt = (constrIndex (dataConstr c), Branch . alt)
 
-The operation `branch` is used to build destructor functions for
+The operation `decons` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
 
 > class DataConstr a

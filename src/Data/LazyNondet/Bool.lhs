@@ -16,13 +16,13 @@ This module provides non-deterministic booleans.
 > true = cons True
 >
 > pTrue :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> pTrue = branch True
+> pTrue = decons True
 >
 > false :: Monad m => Nondet m Bool
 > false = cons False
 >
 > pFalse :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> pFalse = branch False
+> pFalse = decons False
 
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.

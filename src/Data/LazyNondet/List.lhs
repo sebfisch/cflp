@@ -20,16 +20,16 @@ This module provides non-deterministic lists.
 > nil :: Monad m => Nondet m [a]
 > nil = cons ([] :: [()])
 >
-> pNil :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> pNil = branch ([] :: [()])
+> dNil :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
+> dNil = decons ([] :: [()])
 >
 > infixr 5 ^:
 > (^:) :: Monad m => Nondet m a -> Nondet m [a] -> Nondet m [a]
 > (^:) = cons ((:) :: () -> [()] -> [()])
 >
-> pCons :: (cs -> Nondet m a -> Nondet m [a] -> Nondet m b)
+> dCons :: (cs -> Nondet m a -> Nondet m [a] -> Nondet m b)
 >       -> (ConIndex, cs -> Branch m b)
-> pCons = branch ((:) :: () -> [()] -> [()])
+> dCons = decons ((:) :: () -> [()] -> [()])
 >
 > fromList :: Monad m => [Nondet m a] -> Nondet m [a]
 > fromList = foldr (^:) nil
@@ -45,11 +45,11 @@ for the element type.
 Some operations on lists:
 
 > null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
-> null xs = caseOf xs [pNil (\_ -> true), pCons (\_ _ _ -> false)]
+> null xs = caseOf xs [dNil (\_ -> true), dCons (\_ _ _ -> false)]
 >
 > head :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m a
-> head l = caseOf l [pCons (\_ x _ -> x)]
+> head l = caseOf l [dCons (\_ x _ -> x)]
 >
 > tail :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m [a]
-> tail l = caseOf l [pCons (\_ _ xs -> xs)]
+> tail l = caseOf l [dCons (\_ _ xs -> xs)]
 
