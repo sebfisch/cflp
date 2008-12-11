@@ -37,7 +37,9 @@ functional-logic programming in Haskell.
 >  => CFLP cs m
 
 The type class `CFLP` is a shortcut for the type-class constraints on
-constraint functional-logic operations.
+constraint functional-logic computations that are parameterized over a
+constraint store and a constraint monad. Hence, such computations can
+be executed with different constraint stores and search strategies.
 
 > instance CFLP ChoiceStore (ConstrT ChoiceStore [])
 

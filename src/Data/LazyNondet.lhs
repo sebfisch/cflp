@@ -9,18 +9,21 @@ non-deterministic programming.
 >       MultiParamTypeClasses,
 >       FlexibleInstances,
 >       FlexibleContexts,
->       TypeFamilies
+>       TypeFamilies,
+>       FunctionalDependencies
 >   #-}
 >
 > module Data.LazyNondet (
 >
 >   NormalForm, HeadNormalForm(..), mkHNF, Nondet(..),
 >
->   ID, initID, With(..), withUnique,
+>   ID, initID, withUnique,
 >
 >   Unknown(..), failure, oneOf, withHNF, caseOf, caseOf_, Branch(..),
 >
->   Data, nondet, normalForm
+>   Data, nondet, normalForm,
+>
+>   DataConstr(..), cons, branch
 >
 > ) where
 >
@@ -108,7 +111,7 @@ non-deterministic operations. Non-deterministic operations have an
 additional argument for unique identifiers. The operation `withUnique`
 allows to consume an arbitrary number of unique identifiers hiding
 their generation. Conceptually, it has all of the following types at
-once:
+the same time:
 
     Nondet m a -> ID -> Nondet m a
     (ID -> Nondet m a) -> ID -> Nondet m a
@@ -215,6 +218,7 @@ is specialized to use the same monad.
 >   type T (Nondet m b -> a) = T a
 >
 >   withUntyped alt (x:xs) = withUntyped (alt (Typed x)) xs
+>   withUntyped _ _ = error "LazyNondet.withUntyped: too few arguments"
 
 These instances define the overloaded function `withUntyped` that has
 all of the following types at the same time:
@@ -261,6 +265,58 @@ The `normalForm` function evaluates a non-deterministic value and
 lifts all non-deterministic choices to the top level. The results are
 deterministic values and can be converted into their Haskell
 representation.
+
+Syntactic Sugar for Datatype Declarations
+-----------------------------------------
+
+> class MkCons m a b | b -> m
+>  where
+>   mkCons :: a -> [Untyped m] -> b
+>
+> instance (Monad m, Data a) => MkCons m a (Nondet m t)
+>  where
+>   mkCons c args = Typed (return (mkHNF (toConstr c) (reverse args)))
+>
+> instance MkCons m b c => MkCons m (a -> b) (Nondet m t -> c)
+>  where
+>   mkCons c xs x = mkCons (c undefined) (untyped x:xs)
+>
+> cons :: MkCons m a b => a -> b
+> cons c = mkCons c []
+
+The overloaded operation `cons` takes a Haskell constructor and yields
+a corresponding constructor function for non-deterministic values.
+
+> branch :: (DataConstr a, WithUntyped b)
+>        => a -> (cs -> b) -> (ConIndex, cs -> Branch (M b) (T b))
+> branch c alt = (constrIndex (dataConstr c), Branch . alt)
+
+The operation `branch` is used to build destructor functions for
+non-deterministic values that can be used with `caseOf`.
+
+> class DataConstr a
+>  where
+>   dataConstr :: a -> Constr
+>
+> instance DataConstr b => DataConstr (a -> b)
+>  where
+>   dataConstr c = dataConstr (c undefined)
+
+We provide an overloaded operation `dataConstr` that yields a `Constr`
+representation for a constructor rather than for a constructed value
+like `Data.Data.toConstr` does. We do not provide the base instance
+
+    instance Data a => DataConstr a
+     where
+      dataConstr = toConstr
+
+because this would require to allow undecidable instances. As a
+consequence, specialized base instances need to be defined for every
+used datatype. See `Data.LazyNondet.List` for an example of how to use
+`dataConstr` to get the representation of polymorphic constructors.
+
+`Show` Instances
+----------------
 
 > instance Show (HeadNormalForm [])
 >  where

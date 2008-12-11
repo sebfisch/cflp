@@ -3,11 +3,6 @@
 
 This module provides non-deterministic booleans.
 
-> {-# LANGUAGE
->       MultiParamTypeClasses,
->       FlexibleContexts
->   #-}
->
 > module Data.LazyNondet.Bool where
 >
 > import Data.Data
@@ -15,17 +10,19 @@ This module provides non-deterministic booleans.
 >
 > import Control.Monad.Constraint
 >
+> instance DataConstr Bool where dataConstr = toConstr
+>
 > true :: Monad m => Nondet m Bool
-> true = Typed (return (mkHNF (toConstr True) []))
+> true = cons True
 >
 > pTrue :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> pTrue alt = (constrIndex (toConstr True), Branch . alt)
+> pTrue = branch True
 >
 > false :: Monad m => Nondet m Bool
-> false = Typed (return (mkHNF (toConstr False) []))
+> false = cons False
 >
 > pFalse :: (cs -> Nondet m a) -> (ConIndex, cs -> Branch m a)
-> pFalse alt = (constrIndex (toConstr False), Branch . alt)
+> pFalse = branch False
 
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.
