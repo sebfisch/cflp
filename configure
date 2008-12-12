@@ -1,0 +1,3 @@
+#!/bin/bash
+runhaskell Setup.lhs configure --user
+

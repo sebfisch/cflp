@@ -7,10 +7,10 @@ You can install the `cflp` package as follows.
         > tar -xzf cflp-*.tar.gz
         > cd cflp-*
 
- 2. Run configure, build, test, and install.
+ 2. configure, build, test, and install.
 
-        > runhaskell Setup.lhs configure --user
-        > runhaskell Setup.lhs build
-        > runhaskell Setup.lhs test
-        > runhaskell Setup.lhs install
+        > ./configure
+        > make
+        > make test
+        > make install
 
