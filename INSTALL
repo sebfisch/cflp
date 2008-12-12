@@ -1,16 +1,16 @@
 # Installation Instructions
 
-You can install the `cflp` package as follows.
+You can install the `cflp` package as follows:
 
- 1. Unpack the sources and move into the source directory.
+    > ./configure
+    > make
+    > make install
 
-        > tar -xzf cflp-*.tar.gz
-        > cd cflp-*
+This will register the package in your user package databse. 
 
- 2. configure, build, test, and install.
+If you want to install it globally, type:
 
-        > ./configure
-        > make
-        > make test
-        > make install
+    > ./configure --global
+    > make
+    > sudo make install
 

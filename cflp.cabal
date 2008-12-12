@@ -36,7 +36,7 @@ Library
                     FlexibleContexts,
                     TypeFamilies,
                     RankNTypes
-  Ghc-Options:      -O2 -Wall -fno-warn-orphans
+  Ghc-Options:      -Wall -fno-warn-orphans
 
 Source-Repository head
   type:     git
