@@ -4,7 +4,9 @@
 This module provides non-deterministic lists.
 
 > {-# LANGUAGE
->       FlexibleInstances
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       FlexibleContexts
 >   #-}
 >
 > module Data.LazyNondet.List where
@@ -14,6 +16,7 @@ This module provides non-deterministic lists.
 > import Data.LazyNondet.Bool
 >
 > import Control.Monad.Constraint
+> import Control.Monad.Constraint.Choice
 >
 > instance ConsRep [()] where consRep = toConstr
 >
@@ -36,19 +39,22 @@ This module provides non-deterministic lists.
 We can use logic variables of a list type if there are logic variables
 for the element type.
 
-> instance Unknown a => Unknown [a]
+> instance Narrow cs a => Narrow cs [a]
 >  where
->   unknown = withUnique $ \u1 u2 -> 
->              oneOf [nil, unknown u1 ^: unknown u2]
+>   narrow cs = withUnique $ \u1 u2 -> 
+>                 oneOf [nil, unknown cs u1 ^: unknown cs u2]
 
 Some operations on lists:
 
-> null :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m Bool
+> null :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
+>      => Nondet m [a] -> cs -> Nondet m Bool
 > null xs = caseOf_ xs [pNil (\_ -> true)] false
 >
-> head :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m a
+> head :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
+>      => Nondet m [a] -> cs -> Nondet m a
 > head l = caseOf l [pCons (\_ x _ -> x)]
 >
-> tail :: MonadSolve cs m m => Nondet m [a] -> cs -> Nondet m [a]
+> tail :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
+>      => Nondet m [a] -> cs -> Nondet m [a]
 > tail l = caseOf l [pCons (\_ _ xs -> xs)]
 

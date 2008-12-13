@@ -13,7 +13,7 @@ functional-logic programming in Haskell.
 >
 > module Control.CFLP (
 >
->   CFLP, Computation, eval, evalPrint,
+>   CFLP, CS, Computation, eval, evalPrint,
 >
 >   Strategy, depthFirst,
 >
@@ -46,12 +46,12 @@ be executed with different constraint stores and search strategies.
 We declare instances for every combination of monad and constraint
 store that we intend to use.
 
-> type EvalStore = ChoiceStore
+> type CS = ChoiceStore
 >
-> noConstraints :: EvalStore
+> noConstraints :: CS
 > noConstraints = noChoices
 >
-> type Computation m a = EvalStore -> ID -> Nondet (ConstrT EvalStore m) a
+> type Computation m a = CS -> ID -> Nondet (ConstrT CS m) a
 
 Currently, the constraint store used to evaluate constraint
 functional-logic programs is simply a `ChoiceStore`. It will be a
@@ -68,8 +68,8 @@ list.
 
 The strategy of the list monad is depth-first search.
 
-> eval :: (CFLP EvalStore m, MonadSolve EvalStore m m', Data a)
->      => Strategy m' -> (EvalStore -> ID -> Nondet m a)
+> eval :: (CFLP CS m, MonadSolve CS m m', Data a)
+>      => Strategy m' -> (CS -> ID -> Nondet m a)
 >      -> IO [a]
 > eval enumerate op = do
 >   i <- initID
@@ -78,8 +78,8 @@ The strategy of the list monad is depth-first search.
 The `eval` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
-> evalPrint :: (CFLP EvalStore m, MonadSolve EvalStore m m', Data a, Show a)
->           => Strategy m' -> (EvalStore -> ID -> Nondet m a)
+> evalPrint :: (CFLP CS m, MonadSolve CS m m', Data a, Show a)
+>           => Strategy m' -> (CS -> ID -> Nondet m a)
 >           -> IO ()
 > evalPrint s op = eval s op >>= printSols
 >

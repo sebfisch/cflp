@@ -30,7 +30,7 @@ that collects all defined tests.
 > ignoreFirstNarrowSecond :: Assertion
 > ignoreFirstNarrowSecond = assertResults comp [True,False]
 >  where
->   comp cs u = ignot (error "illegal demand") (unknown u) cs
+>   comp cs u = ignot (error "illegal demand") (unknown cs u) cs
 >
 > ignot :: CFLP cs m => Nondet m a -> Nondet m Bool -> cs -> Nondet m Bool
 > ignot _ x = not x
@@ -44,7 +44,7 @@ check demand than with using `error`. So an *error* is considered a
 > sharedVarsAreEqual :: Assertion
 > sharedVarsAreEqual = assertResults comp [[False,False],[True,True]]
 >  where
->   comp _ u = two (unknown u)
+>   comp cs u = two (unknown cs u)
 >
 > two :: Monad m => Nondet m a -> Nondet m [a]
 > two x = x ^: x ^: nil
@@ -61,7 +61,7 @@ are interesting.
 > noDemandOnSharedVar :: Assertion
 > noDemandOnSharedVar = assertResults comp [False]
 >  where
->   comp cs _ = null (two (error "illegal demand")) cs
+>   comp cs _ = null (two (error "illegal demand" :: Nondet m Bool)) cs
 
 Even with an explicit combinator for sharing (to be used, e.g., in the
 definition of the function `two`) there must not be demand on
@@ -70,7 +70,7 @@ something that is shared.
 > sharedCompoundTerms :: Assertion
 > sharedCompoundTerms = assertResults comp [[True,False],[False,True]]
 >  where
->   comp cs u = negHeads (unknown u) cs
+>   comp cs u = negHeads (unknown cs u) cs
 >
 > negHeads :: CFLP cs m => Nondet m [Bool] -> cs -> Nondet m [Bool]
 > negHeads l cs = not (head l cs) cs ^: head l cs ^: nil

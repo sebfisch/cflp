@@ -19,7 +19,7 @@ non-deterministic programming.
 >
 >   ID, initID, withUnique,
 >
->   Unknown(..), failure, oneOf, withHNF, caseOf, caseOf_, Match,
+>   Narrow(..), unknown, failure, oneOf, withHNF, caseOf, caseOf_, Match,
 >
 >   Data, nondet, normalForm,
 >
@@ -50,7 +50,10 @@ of constructors defined in the `Data.Generics` package. With generic
 programming we can convert between Haskell data types and the
 `NormalForm` type.
 
-> data HeadNormalForm m = Cons DataType ConIndex [Untyped m]
+> data HeadNormalForm m
+>   = Cons DataType ConIndex [Untyped m]
+>   | Unknown ID (Untyped m)
+>
 > type Untyped m = m (HeadNormalForm m)
 >
 > mkHNF :: Constr -> [Untyped m] -> HeadNormalForm m
@@ -64,6 +67,9 @@ constructor in the head-normal form of a value.
 In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
+
+Free (logic) variables are represented by `Unknown x` where `x` is the
+narrowed free variable.
 
 > newtype Nondet m a = Typed { untyped :: Untyped m }
 
@@ -128,12 +134,33 @@ restrictive "coverage condition".
 Combinators for Functional-Logic Programming
 --------------------------------------------
 
-> class Unknown a
+> unknown :: (MonadConstr Choice m, Narrow cs a) => cs -> ID -> Nondet m a
+> unknown cs u = x `withTypeOf` y
 >  where
->   unknown :: MonadConstr Choice m => ID -> Nondet m a
+>   x = Typed (return (Unknown u (untyped y)))
+>   y = narrow cs u
+>
+> withTypeOf :: a -> a -> a
+> x `withTypeOf` _ = x
 
-The application of `unknown` to a unique identifier represents a logic
-variable of the corresponding type.
+The application of `unknown` to a constraint store and a unique
+identifier represents a logic variable of an arbitrary type. The
+definition uses the helper function `withTypeOf` in order to constrain
+the type of the call to `narrow`. A narrowed version of the logic
+variable is stored with its name to be able to compute its possible
+values with the ground-normal form function that is working on
+`Untyped m` and, hence, cannot use `narrow`.
+
+> class Narrow cs a
+>  where
+>   narrow :: MonadConstr Choice m => cs -> ID -> Nondet m a
+
+Logic variables of type `a` can be narrowed to head-normal form if
+there is an instance of the type class `Narrow`. A constraint store
+may be used to find the possible results which are returned in a monad
+that supports choices. Usually, `narrow` will be implemented as a
+non-deterministic generator using `oneOf`, but for specific types
+different strategies may be implemented.
 
 > oneOf :: MonadConstr Choice m => [Nondet m a] -> ID -> Nondet m a
 > oneOf xs (ID us) = Typed (choice (uniqFromSupply us) (map untyped xs))
@@ -163,16 +190,18 @@ branch function. Collected constraints are kept attached to the
 computed value by using an appropriate instance of `MonadSolve` that
 does not eliminate them.
 
-> caseOf :: MonadSolve cs m m
+> caseOf :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
 >        => Nondet m a -> [Match cs m b] -> cs -> Nondet m b
 > caseOf x bs = caseOf_ x bs failure
 >
-> caseOf_ :: MonadSolve cs m m
+> caseOf_ :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
 >         => Nondet m a -> [Match cs m b] -> Nondet m b -> cs -> Nondet m b
 > caseOf_ x bs def =
->   withHNF x $ \ (Cons _ idx args) cs ->
->                  maybe def (\b -> branch (b cs) args)
->                   (lookup idx (map unMatch bs))
+>   withHNF x $ \hnf cs ->
+>   case hnf of
+>     Unknown u _ -> caseOf_ (narrow cs u `withTypeOf` x) bs def cs
+>     Cons _ idx args ->
+>       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
 > newtype Match cs m a = Match { unMatch :: (ConIndex, cs -> Branch m a) }
 > data Branch m a = forall t . (WithUntyped t, m ~ M t, a ~ T t) => Branch t
@@ -260,9 +289,12 @@ We provide generic operations to convert between instances of the
 >
 > nf :: MonadSolve cs m m' => Untyped m -> StateT cs m' NormalForm
 > nf x = do
->   Cons typ idx args <- solve x
->   nfs <- mapM nf args
->   return (NormalForm (indexConstr typ idx) nfs)
+>   hnf <- solve x
+>   case hnf of
+>     Unknown _ y -> nf y
+>     Cons typ idx args -> do
+>       nfs <- mapM nf args
+>       return (NormalForm (indexConstr typ idx) nfs)
 
 The `normalForm` function evaluates a non-deterministic value and
 lifts all non-deterministic choices to the top level. The results are
