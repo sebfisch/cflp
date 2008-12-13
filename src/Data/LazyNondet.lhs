@@ -53,7 +53,7 @@ programming we can convert between Haskell data types and the
 
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
->   | forall a . Narrow cs a => Unknown ID (Nondet cs m a)
+>   | forall a . Narrow cs a => Unknown (NarrowPolicy cs a) ID (Nondet cs m a)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
@@ -62,6 +62,12 @@ evaluation of arguments of a constructor may lead to different
 non-deterministic results. Hence, we use a monad around every
 constructor in the head-normal form of a value.
 
+> newtype Nondet cs m a = Typed { untyped :: Untyped cs m }
+
+Untyped non-deterministic data can be phantom typed in order to define
+logic variables by overloading. The phantom type must be the Haskell
+data type that should be used for conversion into primitive data.
+
 > mkHNF :: Constr -> [Untyped cs m] -> HeadNormalForm cs m
 > mkHNF c args = Cons (constrType c) (constrIndex c) args
 
@@ -69,18 +75,31 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-Free (logic) variables are represented by `Unknown u x` where `u` is a
+Free (logic) variables are represented by `Unknown p u x` where `u` is a
 uniqe identifier and `x` which represents the result of narrowing the
 variable according to the constraint store passed to the operation
 that creates the variable. 
 
-The argument `x` may either be used directly when narrowing a variable
-or t constrain the type of the result of *renarrowing* it according to
-the current, possibly updated, constraint store whenever it is
-demanded.
+The variable `p` is a NrrowingPolicy` that specifies whether the
+variable should be
+
+ * narrowed whenever it is demanded according the current constraint
+   store or
+
+ * narrowed only on creation and shared on every demand.
+
+> data NarrowPolicy cs a = OnDemand | OnCreation
+
+Using `OnDemand` can avoid unnessesary branching when accessing a
+variable with an updated constraint store. Using `OnCreation` will
+avoid the reexecution of a non-deterministic generator, which is
+especially useful if it does not consider the constraint store.
 
 > class Narrow cs a
 >  where
+>   narrowPolicy :: NarrowPolicy cs a
+>   narrowPolicy = OnCreation
+>
 >   narrow :: MonadConstr Choice m => cs -> ID -> Nondet cs m a
 
 Logic variables of type `a` can be narrowed to head-normal form if
@@ -90,11 +109,19 @@ that supports choices. Usually, `narrow` will be implemented as a
 non-deterministic generator using `oneOf`, but for specific types
 different strategies may be implemented.
 
-> newtype Nondet cs m a = Typed { untyped :: Untyped cs m }
+The default policy is to narrow on creation and share the results
+narrowed on creation. Instances of `Narrow` that don't use the
+constraint store but simply define a non-deterministic generator,
+hence, don't need to specify a `NarrowPolicy`.
 
-Untyped non-deterministic data can be phantom typed in order to define
-logic variables by overloading. The phantom type must be the Haskell
-data type that should be used for conversion.
+ > narrowHNF :: Narrow cs a => HeadNormalForm cs m -> cs -> Nondet cs m a
+
+ > narrowHNF (Unknown OnDemand   u x) cs = narrow cs u
+ > narrowHNF (Unknown OnCreation _ x) _  = x
+ > narrowHNF x _ = x
+
+The function `narrowHNF` narrows logic variables according to their
+policy and has no effect on constructor-rooted values.
 
 Threading Unique Identifiers
 ----------------------------
@@ -159,7 +186,7 @@ Combinators for Functional-Logic Programming
 > unknown :: (MonadConstr Choice m, Narrow cs a) => cs -> ID -> Nondet cs m a
 > unknown cs u = x
 >  where
->   x = Typed (return (Unknown u (narrow cs u `withTypeOf` x)))
+>   x = Typed (return (Unknown narrowPolicy u (narrow cs u `withTypeOf` x)))
 >
 > withTypeOf :: a -> a -> a
 > x `withTypeOf` _ = x
@@ -207,7 +234,8 @@ does not eliminate them.
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
->     Unknown u y -> caseOf_ (narrow cs u `withTypeOf` y) bs def cs
+>     Unknown OnCreation _ y -> caseOf_ y bs def cs
+>     Unknown OnDemand   u y -> caseOf_ (narrow cs u `withTypeOf` y) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
@@ -313,7 +341,8 @@ We provide generic operations to convert between instances of the
 > nf x = do
 >   hnf <- solve x
 >   case hnf of
->     Unknown u y -> do
+>     Unknown OnCreation _ y -> nf (untyped y)
+>     Unknown OnDemand   u y -> do
 >       cs <- get
 >       nf (untyped (narrow cs u `withTypeOf` y) )
 >     Cons typ idx args -> do
@@ -399,6 +428,7 @@ data that is used to define a typed equality test in the
 
 > instance Show (HeadNormalForm cs [])
 >  where
+>   show (Unknown _ (ID u) _) = show (uniqFromSupply u)
 >   show (Cons typ idx args) 
 >     | null args = show con
 >     | otherwise = unwords (("("++show con):map show args++[")"])
@@ -414,8 +444,9 @@ data that is used to define a typed equality test in the
 >
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
->   show (Cons typ idx [])   = show (indexConstr typ idx)
->   show (Cons typ idx args) =
+>   show (Unknown _ (ID u) _) = show (uniqFromSupply u)
+>   show (Cons typ idx [])    = show (indexConstr typ idx)
+>   show (Cons typ idx args)  =
 >     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 
 
 To simplify debugging, we provide `Show` instances for head-normal
