@@ -23,13 +23,13 @@ This module provides non-deterministic booleans.
 > true :: Monad m => Nondet cs m Bool
 > true = cons True
 >
-> pTrue :: (cs -> Nondet cs m a) -> Match cs m a
+> pTrue :: (cs -> Nondet cs m a) -> Match cs m Bool a
 > pTrue = match True
 >
 > false :: Monad m => Nondet cs m Bool
 > false = cons False
 >
-> pFalse :: (cs -> Nondet cs m a) -> Match cs m a
+> pFalse :: (cs -> Nondet cs m a) -> Match cs m Bool a
 > pFalse = match False
 
 In order to be able to use logic variables of boolean type, we make it
@@ -41,8 +41,8 @@ an instance of the type class `Unknown`.
 
 Some operations with `Bool`s:
 
-> not :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
->     => Nondet cs m a -> cs -> Nondet cs m Bool
+> not :: (MonadSolve cs m m, MonadConstr Choice m, ChoiceStore cs)
+>     => Nondet cs m Bool -> cs -> Nondet cs m Bool
 > not x = caseOf_ x [pFalse (\_ -> true)] false
 >
 > (===) :: MonadSolve cs m m

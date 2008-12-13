@@ -23,7 +23,7 @@ This module provides non-deterministic lists.
 > nil :: Monad m => Nondet cs m [a]
 > nil = cons ([] :: [()])
 >
-> pNil :: (cs -> Nondet cs m a) -> Match cs m a
+> pNil :: (cs -> Nondet cs m b) -> Match cs m [a] b
 > pNil = match ([] :: [()])
 >
 > infixr 5 ^:
@@ -31,7 +31,7 @@ This module provides non-deterministic lists.
 > (^:) = cons ((:) :: () -> [()] -> [()])
 >
 > pCons :: (cs -> Nondet cs m a -> Nondet cs m [a] -> Nondet cs m b)
->       -> Match cs m b
+>       -> Match cs m [a] b
 > pCons = match ((:) :: () -> [()] -> [()])
 >
 > fromList :: Monad m => [Nondet cs m a] -> Nondet cs m [a]

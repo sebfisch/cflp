@@ -20,7 +20,7 @@ non-deterministic programming.
 >
 >   ID, initID, withUnique,
 >
->   Narrow(..), unknown, failure, oneOf, ChoiceStore,
+>   Narrow(..), NarrowPolicy(..), unknown, failure, oneOf, ChoiceStore,
 >
 >   withHNF, caseOf, caseOf_, Match,
 >
@@ -219,21 +219,21 @@ computed value by using an appropriate instance of `MonadSolve` that
 does not eliminate them.
 
 > caseOf :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
->        => Nondet cs m a -> [Match cs m b] -> cs -> Nondet cs m b
+>        => Nondet cs m a -> [Match cs m a b] -> cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
 >
 > caseOf_ :: (MonadSolve cs m m, MonadConstr Choice m, Narrow cs a)
->         => Nondet cs m a -> [Match cs m b] -> Nondet cs m b
+>         => Nondet cs m a -> [Match cs m a b] -> Nondet cs m b
 >         -> cs -> Nondet cs m b
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
->     Unknown OnCreation _ y -> caseOf_ y bs def cs
->     Unknown OnDemand   u y -> caseOf_ (narrow cs u `withTypeOf` y) bs def cs
+>     -- Unknown OnCreation _ y -> caseOf_ y bs def cs
+>     Unknown OnDemand   u y -> caseOf_ (narrow cs u `withTypeOf` x) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
-> newtype Match cs m a = Match { unMatch :: (ConIndex, cs -> Branch cs m a) }
+> newtype Match cs m a b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
 > data Branch cs m a =
 >   forall t . (WithUntyped t, cs ~ C t, m ~ M t, a ~ T t) => Branch t
 >
@@ -370,7 +370,7 @@ The overloaded operation `constr` takes a Haskell constructor and yields
 a corresponding constructor function for non-deterministic values.
 
 > match :: (ConsRep a, WithUntyped b)
->       => a -> (C b -> b) -> Match (C b) (M b) (T b)
+>       => a -> (C b -> b) -> Match (C b) (M b) t (T b)
 > match c alt = Match (constrIndex (consRep c), Branch . alt)
 
 The operation `decons` is used to build destructor functions for
