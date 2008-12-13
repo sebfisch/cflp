@@ -25,8 +25,14 @@ Library
   Other-Modules:    Control.Monad.Constraint,
                     Control.Monad.Constraint.Choice,
                     Data.LazyNondet,
-                    Data.LazyNondet.Bool,
-                    Data.LazyNondet.List,
+                    Data.LazyNondet.Types,
+                    Data.LazyNondet.Types.Bool,
+                    Data.LazyNondet.Types.List,
+                    Data.LazyNondet.UniqueID,
+                    Data.LazyNondet.Matching,
+                    Data.LazyNondet.Narrowing,
+                    Data.LazyNondet.Primitive,
+                    Data.LazyNondet.Combinators,
                     Control.CFLP.Tests,
                     Control.CFLP.Tests.CallTimeChoice
   Hs-Source-Dirs:   src

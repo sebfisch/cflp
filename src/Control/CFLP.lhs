@@ -18,14 +18,14 @@ functional-logic programming in Haskell.
 >   Strategy, depthFirst,
 >
 >   module Data.LazyNondet,
->   module Data.LazyNondet.Bool,
->   module Data.LazyNondet.List
+>   module Data.LazyNondet.Types.Bool,
+>   module Data.LazyNondet.Types.List
 >
 > ) where
 >
 > import Data.LazyNondet
-> import Data.LazyNondet.Bool
-> import Data.LazyNondet.List
+> import Data.LazyNondet.Types.Bool
+> import Data.LazyNondet.Types.List
 >
 > import Control.Monad.State
 > import Control.Monad.Constraint
