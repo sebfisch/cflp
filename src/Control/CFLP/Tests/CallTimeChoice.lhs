@@ -30,7 +30,7 @@ that collects all defined tests.
 > ignoreFirstNarrowSecond :: Assertion
 > ignoreFirstNarrowSecond = assertResults comp [True,False]
 >  where
->   comp cs u = ignot (error "illegal demand") (unknown u) cs
+>   comp cs u = ignot (error "illegal demand") (unknown cs u) cs
 >
 > ignot :: CFLP cs m
 >       => Nondet cs m a -> Nondet cs m Bool -> cs -> Nondet cs m Bool
@@ -45,7 +45,7 @@ check demand than with using `error`. So an *error* is considered a
 > sharedVarsAreEqual :: Assertion
 > sharedVarsAreEqual = assertResults comp [[False,False],[True,True]]
 >  where
->   comp _ u = two (unknown u)
+>   comp cs u = two (unknown cs u)
 >
 > two :: Monad m => Nondet cs m a -> Nondet cs m [a]
 > two x = x ^: x ^: nil
@@ -71,7 +71,7 @@ something that is shared.
 > sharedCompoundTerms :: Assertion
 > sharedCompoundTerms = assertResults comp [[True,False],[False,True]]
 >  where
->   comp cs u = negHeads (unknown u) cs
+>   comp cs u = negHeads (unknown cs u) cs
 >
 > negHeads :: CFLP cs m => Nondet cs m [Bool] -> cs -> Nondet cs m [Bool]
 > negHeads l cs = not (head l cs) cs ^: head l cs ^: nil

@@ -42,8 +42,8 @@ for the element type.
 
 > instance Narrow cs a => Narrow cs [a]
 >  where
->   narrow _ = withUnique $ \u1 u2 -> 
->                oneOf [nil, unknown u1 ^: unknown u2]
+>   narrow cs = withUnique $ \u1 u2 -> 
+>                oneOf [nil, unknown cs u1 ^: unknown cs u2]
 
 Some operations on lists:
 
