@@ -229,7 +229,8 @@ does not eliminate them.
 >   withHNF x $ \hnf cs ->
 >   case hnf of
 >     -- Unknown OnCreation _ y -> caseOf_ y bs def cs
->     Unknown OnDemand   u y -> caseOf_ (narrow cs u `withTypeOf` x) bs def cs
+>     -- ignore narrow policy (cannot type above rule)
+>     Unknown _ u y -> caseOf_ (narrow cs u) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
