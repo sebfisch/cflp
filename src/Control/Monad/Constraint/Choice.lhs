@@ -17,7 +17,7 @@ the same value if they are shared.
 >
 > module Control.Monad.Constraint.Choice (
 >
->   Choice, ChoiceStore, noChoices, choice
+>   Choice, ChoiceStore(..), ChoiceStoreUnique, noChoices, choice
 >
 > ) where
 >
@@ -30,13 +30,26 @@ the same value if they are shared.
 We borrow unique identifiers from the package `ghc` which is hidden by
 default.
 
+> class ChoiceStore cs
+>  where
+>   lookupChoice :: Unique -> cs -> Maybe Int
+
+We define an interface for choice stores that provide an operation to
+lookup a previously made choice.
+
 > newtype Choice = Choice (Unique,Int)
-> newtype ChoiceStore = ChoiceStore (UniqFM Int)
+> newtype ChoiceStoreUnique = ChoiceStore (UniqFM Int)
 >
-> noChoices :: ChoiceStore
+> noChoices :: ChoiceStoreUnique
 > noChoices = ChoiceStore emptyUFM
 >
-> instance ConstraintStore Choice ChoiceStore
+> instance ChoiceStore ChoiceStoreUnique
+>  where
+>   lookupChoice u (ChoiceStore cs) = lookupUFM_Directly cs u
+
+A finite map mapping `Unique`s to integers is a `ChoiceStore`.
+
+> instance ConstraintStore Choice ChoiceStoreUnique
 >  where
 >   assert (Choice (u,x)) = do
 >     ChoiceStore cs <- get
@@ -49,8 +62,12 @@ Choices are labeled with a `Unique`, so we can store them in a
 
 The `assert` operations fails to insert conflicting choices.
 
-> choice :: MonadConstr Choice m => Unique -> [m a] -> m a
-> choice u = foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..]
+> choice :: (MonadConstr Choice m, ChoiceStore cs)
+>        => cs -> Unique -> [m a] -> m a
+> choice cs u xs =
+>   maybe (foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..] $ xs)
+>         (xs!!)
+>         (lookupChoice u cs)
 >  where constrain n = (constr (Choice (u,n))>>)
 
 The operation `choice` takes a unique label and a list of monadic
@@ -59,4 +76,12 @@ a single monadic action combining the alternatives with `mplus`. If it
 occurs more than once in a bigger monadic action, the result is
 constrained to take the same alternative everywhere when collecting
 constraints.
+
+If a choice with the same label has been created previously and the
+label is already constrained to an alternative, then this alternative
+is returned directly and no choice is created.
+
+This situation may occur if a shared logic variable is renarrowed
+whenever it is demanded rather than shared and only narrowed on
+creation.
 

@@ -40,10 +40,10 @@ This module provides non-deterministic lists.
 We can use logic variables of a list type if there are logic variables
 for the element type.
 
-> instance Narrow cs a => Narrow cs [a]
+> instance (ChoiceStore cs, Narrow cs a) => Narrow cs [a]
 >  where
 >   narrow cs = withUnique $ \u1 u2 -> 
->                oneOf [nil, unknown cs u1 ^: unknown cs u2]
+>                 oneOf [nil, unknown cs u1 ^: unknown cs u2] cs
 
 Some operations on lists:
 

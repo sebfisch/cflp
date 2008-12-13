@@ -35,9 +35,9 @@ This module provides non-deterministic booleans.
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Unknown`.
 
-> instance Narrow cs Bool
+> instance ChoiceStore cs => Narrow cs Bool
 >  where
->   narrow _ = oneOf [false,true]
+>   narrow = oneOf [false,true]
 
 Some operations with `Bool`s:
 

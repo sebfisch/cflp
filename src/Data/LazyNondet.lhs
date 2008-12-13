@@ -20,7 +20,9 @@ non-deterministic programming.
 >
 >   ID, initID, withUnique,
 >
->   Narrow(..), unknown, failure, oneOf, withHNF, caseOf, caseOf_, Match,
+>   Narrow(..), unknown, failure, oneOf, ChoiceStore,
+>
+>   withHNF, caseOf, caseOf_, Match,
 >
 >   Data, nondet, normalForm,
 >
@@ -95,10 +97,10 @@ variable with an updated constraint store. Using `OnCreation` will
 avoid the reexecution of a non-deterministic generator, which is
 especially useful if it does not consider the constraint store.
 
-> class Narrow cs a
+> class ChoiceStore cs => Narrow cs a
 >  where
 >   narrowPolicy :: NarrowPolicy cs a
->   narrowPolicy = OnCreation
+>   narrowPolicy = OnDemand
 >
 >   narrow :: MonadConstr Choice m => cs -> ID -> Nondet cs m a
 
@@ -109,19 +111,9 @@ that supports choices. Usually, `narrow` will be implemented as a
 non-deterministic generator using `oneOf`, but for specific types
 different strategies may be implemented.
 
-The default policy is to narrow on creation and share the results
-narrowed on creation. Instances of `Narrow` that don't use the
-constraint store but simply define a non-deterministic generator,
-hence, don't need to specify a `NarrowPolicy`.
-
- > narrowHNF :: Narrow cs a => HeadNormalForm cs m -> cs -> Nondet cs m a
-
- > narrowHNF (Unknown OnDemand   u x) cs = narrow cs u
- > narrowHNF (Unknown OnCreation _ x) _  = x
- > narrowHNF x _ = x
-
-The function `narrowHNF` narrows logic variables according to their
-policy and has no effect on constructor-rooted values.
+The default policy is to narrow on demand in order to avoid
+unnessesary choices in shared free variables that can lead to
+eponential explosion of the search space.
 
 Threading Unique Identifiers
 ----------------------------
@@ -187,17 +179,19 @@ Combinators for Functional-Logic Programming
 > unknown cs u = x
 >  where
 >   x = Typed (return (Unknown narrowPolicy u (narrow cs u `withTypeOf` x)))
->
+
+The application of `unknown` to a constraint store and a unique
+identifier represents a logic variable of an arbitrary type. 
+
 > withTypeOf :: a -> a -> a
 > x `withTypeOf` _ = x
 
-The application of `unknown` to a constraint store and a unique
-identifier represents a logic variable of an arbitrary type. The
-definition uses the helper function `withTypeOf` in order to constrain
-the type of a dummy argument.
+The definition uses the helper function `withTypeOf` in order to
+constrain the type of the narrowed variable.
 
-> oneOf :: MonadConstr Choice m => [Nondet cs m a] -> ID -> Nondet cs m a
-> oneOf xs (ID us) = Typed (choice (uniqFromSupply us) (map untyped xs))
+> oneOf :: (MonadConstr Choice m, ChoiceStore cs)
+>       => [Nondet cs m a] -> cs -> ID -> Nondet cs m a
+> oneOf xs cs (ID us) = Typed (choice cs (uniqFromSupply us) (map untyped xs))
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in

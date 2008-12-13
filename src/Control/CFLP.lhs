@@ -33,6 +33,7 @@ functional-logic programming in Haskell.
 >
 > class (MonadConstr Choice m,
 >        ConstraintStore Choice cs,
+>        ChoiceStore cs,
 >        MonadSolve cs m m)
 >  => CFLP cs m
 
@@ -41,12 +42,12 @@ constraint functional-logic computations that are parameterized over a
 constraint store and a constraint monad. Hence, such computations can
 be executed with different constraint stores and search strategies.
 
-> instance CFLP ChoiceStore (ConstrT ChoiceStore [])
+> instance CFLP ChoiceStoreUnique (ConstrT ChoiceStoreUnique [])
 
 We declare instances for every combination of monad and constraint
 store that we intend to use.
 
-> type CS = ChoiceStore
+> type CS = ChoiceStoreUnique
 >
 > noConstraints :: CS
 > noConstraints = noChoices
