@@ -56,24 +56,28 @@ programming we can convert between Haskell data types and the
 >   | forall a . Narrow cs a => Unknown ID (Nondet cs m a)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
->
-> mkHNF :: Constr -> [Untyped cs m] -> HeadNormalForm cs m
-> mkHNF c args = Cons (constrType c) (constrIndex c) args
 
 Data in lazy functional-logic programs is evaluated on demand. The
 evaluation of arguments of a constructor may lead to different
 non-deterministic results. Hence, we use a monad around every
 constructor in the head-normal form of a value.
 
+> mkHNF :: Constr -> [Untyped cs m] -> HeadNormalForm cs m
+> mkHNF c args = Cons (constrType c) (constrIndex c) args
+
 In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-Free (logic) variables are represented by `Unknown u t` where `u` is a
-uniqe identifier and `t` is a dummy argument that specifies the type
-of the variable. This dummy argument can be used to constraint the
-result type of narrowing the variable even in an untyped algorithm
-like the normal-form function.
+Free (logic) variables are represented by `Unknown u x` where `u` is a
+uniqe identifier and `x` which represents the result of narrowing the
+variable according to the constraint store passed to the operation
+that creates the variable. 
+
+The argument `x` may either be used directly when narrowing a variable
+or t constrain the type of the result of *renarrowing* it according to
+the current, possibly updated, constraint store whenever it is
+demanded.
 
 > class Narrow cs a
 >  where
@@ -152,10 +156,10 @@ restrictive "coverage condition".
 Combinators for Functional-Logic Programming
 --------------------------------------------
 
-> unknown :: (Monad m, Narrow cs a) => ID -> Nondet cs m a
-> unknown u = x
+> unknown :: (MonadConstr Choice m, Narrow cs a) => cs -> ID -> Nondet cs m a
+> unknown cs u = x
 >  where
->   x = Typed (return (Unknown u (undefined `withTypeOf` x)))
+>   x = Typed (return (Unknown u (narrow cs u `withTypeOf` x)))
 >
 > withTypeOf :: a -> a -> a
 > x `withTypeOf` _ = x
@@ -203,7 +207,7 @@ does not eliminate them.
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
->     Unknown u _ -> caseOf_ (narrow cs u `withTypeOf` x) bs def cs
+>     Unknown u y -> caseOf_ (narrow cs u `withTypeOf` y) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
@@ -264,13 +268,20 @@ is specialized to use the same monad.
 These instances define the overloaded function `withUntyped` that has
 all of the following types at the same time:
 
-    withUntyped :: Nondet cs m a -> [Untyped cs m] -> Nondet cs m a
-    withUntyped :: (Nondet cs m a -> Nondet cs m b) -> [Untyped cs m] -> Nondet cs m b
+    withUntyped :: Nondet cs m a
+                -> [Untyped cs m] -> Nondet cs m a
+
+    withUntyped :: (Nondet cs m a -> Nondet cs m b)
+                -> [Untyped cs m] -> Nondet cs m b
+
+    withUntyped :: (Nondet cs m a -> Nondet cs m b -> Nondet cs m c)
+                -> [Untyped cs m] -> Nondet cs m c
     ...
 
 If the function given as first argument has n arguments, then the
 application of `withUntyped` to this function consumes n elements of
-the list of untyped values.
+the list of untyped values and yields the result of applying the given
+function to typed versions of these values.
 
 Converting Between Primitive and Non-Deterministic Data
 -------------------------------------------------------
@@ -304,7 +315,7 @@ We provide generic operations to convert between instances of the
 >   case hnf of
 >     Unknown u y -> do
 >       cs <- get
->       nf (untyped (narrow cs u `withTypeOf` y) `withTypeOf` x)
+>       nf (untyped (narrow cs u `withTypeOf` y) )
 >     Cons typ idx args -> do
 >       nfs <- mapM nf args
 >       return (NormalForm (indexConstr typ idx) nfs)
