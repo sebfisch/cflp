@@ -55,7 +55,8 @@ programming we can convert between Haskell data types and the
 
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
->   | forall a . Narrow cs a => Unknown (NarrowPolicy cs a) ID (Nondet cs m a)
+>   | FreeVar ID (Untyped cs m)
+>   | Execute (cs -> Untyped cs m)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
@@ -77,25 +78,24 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-Free (logic) variables are represented by `Unknown p u x` where `u` is a
+Free (logic) variables are represented by `Unknown u x` where `u` is a
 uniqe identifier and `x` which represents the result of narrowing the
 variable according to the constraint store passed to the operation
-that creates the variable. 
+that creates the variable.
 
-The variable `p` is a NrrowingPolicy` that specifies whether the
-variable should be
+> freeVar :: Monad m => ID -> Nondet cs m a -> Nondet cs m a
+> freeVar u = Typed . return . FreeVar u . untyped
 
- * narrowed whenever it is demanded according the current constraint
-   store or
+The function `freeVar` is used to put a name around a narrowed free
+variable.
 
- * narrowed only on creation and shared on every demand.
+> execute :: Monad m => (cs -> Nondet cs m a) -> Nondet cs m a
+> execute exe = Typed . return . Execute $ (untyped . exe)
 
-> data NarrowPolicy cs a = OnDemand | OnCreation
-
-Using `OnDemand` can avoid unnessesary branching when accessing a
-variable with an updated constraint store. Using `OnCreation` will
-avoid the reexecution of a non-deterministic generator, which is
-especially useful if it does not consider the constraint store.
+With `execute` computations can be delayed to be rexecuted with the
+current constraint store whenever they are demanded. This is useful to
+avoid unessary branching when narrowing logic variables. Use with
+care: `execute` intentionally destroys sharing!
 
 > class ChoiceStore cs => Narrow cs a
 >  where
@@ -114,6 +114,36 @@ different strategies may be implemented.
 The default policy is to narrow on demand in order to avoid
 unnessesary choices in shared free variables that can lead to
 eponential explosion of the search space.
+
+A `NarrowPolicy` specifies whether a logic variable should be
+
+ * narrowed whenever it is demanded according the current constraint
+   store or
+
+ * narrowed only on creation and shared on every demand.
+
+> data NarrowPolicy cs a = OnDemand | OnCreation
+
+Using `OnDemand` can avoid unnessesary branching when accessing a
+variable with an updated constraint store. Using `OnCreation` will
+avoid the reexecution of a non-deterministic generator.
+
+> narrowWithPolicy :: (MonadConstr Choice m, Narrow cs a)
+>                  => cs -> ID -> Nondet cs m a
+> narrowWithPolicy cs u = x
+>  where
+>   x = case policy x of
+>         OnDemand   -> execute (`narrow`u)
+>         OnCreation -> narrow cs u
+>
+> policy :: Narrow cs a => Nondet cs m a -> NarrowPolicy cs a
+> policy _ = narrowPolicy
+
+The function `narrowWithPolicy` narrows a logic variable or creates a
+delayed execution that will be performed whenever the variable is
+demanded. The definition uses a helper function in order to constrain
+the type of the narrowing policy.
+
 
 Threading Unique Identifiers
 ----------------------------
@@ -176,18 +206,10 @@ Combinators for Functional-Logic Programming
 --------------------------------------------
 
 > unknown :: (MonadConstr Choice m, Narrow cs a) => cs -> ID -> Nondet cs m a
-> unknown cs u = x
->  where
->   x = Typed (return (Unknown narrowPolicy u (narrow cs u `withTypeOf` x)))
+> unknown cs u = freeVar u (narrowWithPolicy cs u)
 
 The application of `unknown` to a constraint store and a unique
 identifier represents a logic variable of an arbitrary type. 
-
-> withTypeOf :: a -> a -> a
-> x `withTypeOf` _ = x
-
-The definition uses the helper function `withTypeOf` in order to
-constrain the type of the narrowed variable.
 
 > oneOf :: (MonadConstr Choice m, ChoiceStore cs)
 >       => [Nondet cs m a] -> cs -> ID -> Nondet cs m a
@@ -228,9 +250,8 @@ does not eliminate them.
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
->     -- Unknown OnCreation _ y -> caseOf_ y bs def cs
->     -- ignore narrow policy (cannot type above rule)
->     Unknown _ u y -> caseOf_ (narrow cs u) bs def cs
+>     FreeVar _ y -> caseOf_ (Typed y) bs def cs
+>     Execute exe -> caseOf_ (Typed (exe cs)) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
@@ -336,10 +357,8 @@ We provide generic operations to convert between instances of the
 > nf x = do
 >   hnf <- solve x
 >   case hnf of
->     Unknown OnCreation _ y -> nf (untyped y)
->     Unknown OnDemand   u y -> do
->       cs <- get
->       nf (untyped (narrow cs u `withTypeOf` y) )
+>     FreeVar _ y -> nf y
+>     Execute exe -> get >>= nf . exe
 >     Cons typ idx args -> do
 >       nfs <- mapM nf args
 >       return (NormalForm (indexConstr typ idx) nfs)
@@ -423,7 +442,8 @@ data that is used to define a typed equality test in the
 
 > instance Show (HeadNormalForm cs [])
 >  where
->   show (Unknown _ (ID u) _) = show (uniqFromSupply u)
+>   show (FreeVar (ID u) _) = show (uniqFromSupply u)
+>   show (Execute _) = "<delayed>"
 >   show (Cons typ idx args) 
 >     | null args = show con
 >     | otherwise = unwords (("("++show con):map show args++[")"])
@@ -439,9 +459,10 @@ data that is used to define a typed equality test in the
 >
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
->   show (Unknown _ (ID u) _) = show (uniqFromSupply u)
->   show (Cons typ idx [])    = show (indexConstr typ idx)
->   show (Cons typ idx args)  =
+>   show (FreeVar (ID u) _)  = show (uniqFromSupply u)
+>   show (Execute _)         = "<delayed>"
+>   show (Cons typ idx [])   = show (indexConstr typ idx)
+>   show (Cons typ idx args) =
 >     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 
 
 To simplify debugging, we provide `Show` instances for head-normal
