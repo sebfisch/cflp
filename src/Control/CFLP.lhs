@@ -51,7 +51,7 @@ store that we intend to use.
 > noConstraints :: CS
 > noConstraints = noChoices
 >
-> type Computation m a = CS -> ID -> Nondet (ConstrT CS m) a
+> type Computation m a = CS -> ID -> Nondet CS (ConstrT CS m) a
 
 Currently, the constraint store used to evaluate constraint
 functional-logic programs is simply a `ChoiceStore`. It will be a
@@ -69,7 +69,7 @@ list.
 The strategy of the list monad is depth-first search.
 
 > eval :: (CFLP CS m, MonadSolve CS m m', Data a)
->      => Strategy m' -> (CS -> ID -> Nondet m a)
+>      => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >      -> IO [a]
 > eval enumerate op = do
 >   i <- initID
@@ -79,7 +79,7 @@ The `eval` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
 > evalPrint :: (CFLP CS m, MonadSolve CS m m', Data a, Show a)
->           => Strategy m' -> (CS -> ID -> Nondet m a)
+>           => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >           -> IO ()
 > evalPrint s op = eval s op >>= printSols
 >

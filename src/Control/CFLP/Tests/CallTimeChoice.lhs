@@ -30,9 +30,10 @@ that collects all defined tests.
 > ignoreFirstNarrowSecond :: Assertion
 > ignoreFirstNarrowSecond = assertResults comp [True,False]
 >  where
->   comp cs u = ignot (error "illegal demand") (unknown cs u) cs
+>   comp cs u = ignot (error "illegal demand") (unknown u) cs
 >
-> ignot :: CFLP cs m => Nondet m a -> Nondet m Bool -> cs -> Nondet m Bool
+> ignot :: CFLP cs m
+>       => Nondet cs m a -> Nondet cs m Bool -> cs -> Nondet cs m Bool
 > ignot _ x = not x
 
 This test checks a function with two arguments, where the first must
@@ -44,9 +45,9 @@ check demand than with using `error`. So an *error* is considered a
 > sharedVarsAreEqual :: Assertion
 > sharedVarsAreEqual = assertResults comp [[False,False],[True,True]]
 >  where
->   comp cs u = two (unknown cs u)
+>   comp _ u = two (unknown u)
 >
-> two :: Monad m => Nondet m a -> Nondet m [a]
+> two :: Monad m => Nondet cs m a -> Nondet cs m [a]
 > two x = x ^: x ^: nil
 
 This test checks call-time choice semantics: variables represent
@@ -61,7 +62,7 @@ are interesting.
 > noDemandOnSharedVar :: Assertion
 > noDemandOnSharedVar = assertResults comp [False]
 >  where
->   comp cs _ = null (two (error "illegal demand" :: Nondet m Bool)) cs
+>   comp cs _ = null (two (error "illegal demand" :: Nondet cs m Bool)) cs
 
 Even with an explicit combinator for sharing (to be used, e.g., in the
 definition of the function `two`) there must not be demand on
@@ -70,9 +71,9 @@ something that is shared.
 > sharedCompoundTerms :: Assertion
 > sharedCompoundTerms = assertResults comp [[True,False],[False,True]]
 >  where
->   comp cs u = negHeads (unknown cs u) cs
+>   comp cs u = negHeads (unknown u) cs
 >
-> negHeads :: CFLP cs m => Nondet m [Bool] -> cs -> Nondet m [Bool]
+> negHeads :: CFLP cs m => Nondet cs m [Bool] -> cs -> Nondet cs m [Bool]
 > negHeads l cs = not (head l cs) cs ^: head l cs ^: nil
 
 This test checks whether sharing is ensured on aruments of compound
