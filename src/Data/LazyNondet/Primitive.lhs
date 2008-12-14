@@ -103,8 +103,8 @@ the work.
 > prim_eq :: MonadSolve cs m m
 >         => Untyped cs m -> Untyped cs m -> StateT cs m Bool
 > prim_eq x y = do
->   Cons _ ix xs <- solve x
->   Cons _ iy ys <- solve y
+>   Cons _ ix xs <- solveCons x
+>   Cons _ iy ys <- solveCons y
 >   if ix==iy then all_eq xs ys else return False
 >  where
 >   all_eq [] [] = return True
@@ -116,3 +116,17 @@ the work.
 We provide a generic comparison function for untyped non-deterministic
 data that is used to define a typed equality test in the
 `Data.LazyNondet.Bool` module.
+
+> solveCons :: MonadSolve cs m m
+>           => Untyped cs m -> StateT cs m (HeadNormalForm cs m)
+> solveCons x = do
+>   hnf <- solve x
+>   case hnf of
+>     FreeVar _ y -> solveCons y
+>     Delayed res -> get >>= solveCons . res
+>     _ -> return hnf
+
+The function `solveCons` is like `solve` but always yields a
+constructor-rooted term, i.e., no free variable or delayed
+computation.
+
