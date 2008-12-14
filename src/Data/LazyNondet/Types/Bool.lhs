@@ -25,13 +25,13 @@ This module provides non-deterministic booleans.
 > true :: Monad m => Nondet cs m Bool
 > true = cons True
 >
-> pTrue :: (cs -> Nondet cs m a) -> Match cs m Bool a
+> pTrue :: (cs -> Nondet cs m a) -> Match Bool cs m a
 > pTrue = match True
 >
 > false :: Monad m => Nondet cs m Bool
 > false = cons False
 >
-> pFalse :: (cs -> Nondet cs m a) -> Match cs m Bool a
+> pFalse :: (cs -> Nondet cs m a) -> Match Bool cs m a
 > pFalse = match False
 
 In order to be able to use logic variables of boolean type, we make it

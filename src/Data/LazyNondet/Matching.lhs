@@ -95,23 +95,23 @@ application of `withUntyped` to this function consumes n elements of
 the list of untyped values and yields the result of applying the given
 function to typed versions of these values.
 
-> newtype Match cs m a b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
+> newtype Match a cs m b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
 > data Branch cs m a =
 >   forall t . (WithUntyped t, cs ~ C t, m ~ M t, a ~ T t) => Branch t
 >
 > match :: (ConsRep a, WithUntyped b)
->       => a -> (C b -> b) -> Match (C b) (M b) t (T b)
+>       => a -> (C b -> b) -> Match t (C b) (M b) (T b)
 > match c alt = Match (constrIndex (consRep c), Branch . alt)
 
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
 
 > caseOf :: (MonadSolve cs m m, MonadConstr Choice m)
->        => Nondet cs m a -> [Match cs m a b] -> cs -> Nondet cs m b
+>        => Nondet cs m a -> [Match a cs m b] -> cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
 >
 > caseOf_ :: (MonadSolve cs m m, MonadConstr Choice m)
->         => Nondet cs m a -> [Match cs m a b] -> Nondet cs m b
+>         => Nondet cs m a -> [Match a cs m b] -> Nondet cs m b
 >         -> cs -> Nondet cs m b
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
