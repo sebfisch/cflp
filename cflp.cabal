@@ -40,6 +40,7 @@ Library
                     MultiParamTypeClasses,
                     FlexibleInstances,
                     FlexibleContexts,
+                    PatternGuards,
                     TypeFamilies,
                     RankNTypes
   Ghc-Options:      -Wall -fno-warn-orphans

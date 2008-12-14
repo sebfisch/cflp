@@ -5,6 +5,7 @@ This module defines the basic types to represent lazy
 non-deterministic data.
 
 > {-# LANGUAGE
+>       PatternGuards,
 >       FlexibleInstances
 >   #-}
 >
@@ -20,18 +21,18 @@ non-deterministic data.
 >
 > import Control.Monad.Constraint
 >
+> import Unique
 > import UniqSupply
 >
 > newtype ID = ID UniqSupply
 >
-> data NormalForm = NormalForm Constr [NormalForm]
->  deriving Show
+> data NormalForm = NormalForm Constr [NormalForm] | Var Unique
 
 The normal form of data is represented by the type `NormalForm` which
-defines a tree of constructors. The type `Constr` is a representation
-of constructors defined in the `Data.Generics` package. With generic
-programming we can convert between Haskell data types and the
-`NormalForm` type.
+defines a tree of constructors and logic variables. The type `Constr`
+is a representation of constructors defined in the `Data.Generics`
+package. With generic programming we can convert between Haskell data
+types and the `NormalForm` type.
 
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
@@ -108,3 +109,20 @@ care: `execute` intentionally destroys sharing!
 To simplify debugging, we provide `Show` instances for head-normal
 forms and non-deterministic values.
 
+> instance Show NormalForm
+>  where
+>   showsPrec _ (Var u) = shows u
+>   showsPrec _ (NormalForm cons []) = shows cons
+>   showsPrec n x@(NormalForm cons args)
+>     | Just xs <- fromList x = shows xs
+>     | n == 0    = shows cons . foldr1 (\y z -> (' ':).y.z) (map shows args)
+>     | otherwise = ('(':) . shows x . (')':)
+>
+> fromList :: NormalForm -> Maybe [NormalForm]
+> fromList (NormalForm cons args)
+>   | show cons == "[]" = Just []
+>   | show cons == "(:)", [x,l] <- args, Just xs <- fromList l = Just (x:xs)
+> fromList _ = Nothing
+
+For normal forms we provide a custum `Show` instance because we want
+to use it to print partial values in the evaluator.

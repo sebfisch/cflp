@@ -24,6 +24,7 @@ functional-logic programming in Haskell.
 > ) where
 >
 > import Data.LazyNondet
+> import Data.LazyNondet.Primitive
 > import Data.LazyNondet.Types.Bool
 > import Data.LazyNondet.Types.List
 >
@@ -74,7 +75,9 @@ The strategy of the list monad is depth-first search.
 >      -> IO [a]
 > eval enumerate op = do
 >   i <- initID
->   return (enumerate (normalForm (op noConstraints i) noConstraints))
+>   let xs = enumerate $ liftM prim $
+>             groundNormalForm (op noConstraints i) noConstraints
+>   return xs
 
 The `eval` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.

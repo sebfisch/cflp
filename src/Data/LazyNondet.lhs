@@ -16,7 +16,7 @@ non-deterministic programming.
 >
 >   withHNF, caseOf, caseOf_, Match,
 >
->   Data, nondet, normalForm,
+>   Data, nondet, groundNormalForm, partialNormalForm,
 >
 >   ConsRep(..), cons, match,
 >
