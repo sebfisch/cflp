@@ -5,4 +5,4 @@ dist/*
 src/*.html
 *.lhs.html
 *.lhs.pdf
-
+update-webpage.sh
