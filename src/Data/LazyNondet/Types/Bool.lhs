@@ -35,7 +35,7 @@ This module provides non-deterministic booleans.
 > pFalse = match False
 
 In order to be able to use logic variables of boolean type, we make it
-an instance of the type class `Unknown`.
+an instance of the type class `Narrow`.
 
 > instance ChoiceStore cs => Narrow cs Bool
 >  where

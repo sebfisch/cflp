@@ -39,7 +39,7 @@ different strategies may be implemented.
 
 The default policy is to narrow on demand in order to avoid
 unnessesary choices in shared free variables that can lead to
-eponential explosion of the search space.
+exponential explosion of the search space.
 
 A `NarrowPolicy` specifies whether a logic variable should be
 

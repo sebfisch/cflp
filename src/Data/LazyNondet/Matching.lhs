@@ -124,7 +124,7 @@ non-deterministic values that can be used with `caseOf`.
 > branch :: Branch cs m a -> [Untyped cs m] -> Nondet cs m a
 > branch (Branch alt) = withUntyped alt
 
-We provide operations `caseOf` and `caseOf` (with and without a
+We provide operations `caseOf_` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped
 values are hidden so functional-logic code does not need to match on
 the `Cons` constructor explicitly. However, using this combinator

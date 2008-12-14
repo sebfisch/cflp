@@ -1,4 +1,4 @@
-% Primitive Generic Functions on Lazy Non-Deterministc Data
+% Primitive Generic Functions on Lazy Non-Deterministic Data
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
 > {-# LANGUAGE

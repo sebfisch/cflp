@@ -2,8 +2,7 @@
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
 This module defines the basic types to represent lazy
-non-deterministic data together with operations to convert them into
-primitive Haskell data and vice versa.
+non-deterministic data.
 
 > {-# LANGUAGE
 >       FlexibleInstances
@@ -60,7 +59,7 @@ representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
 Free (logic) variables are represented by `Unknown u x` where `u` is a
-uniqe identifier and `x` which represents the result of narrowing the
+uniqe identifier and `x` represents the result of narrowing the
 variable according to the constraint store passed to the operation
 that creates the variable.
 
@@ -73,7 +72,7 @@ variable.
 > execute :: Monad m => (cs -> Nondet cs m a) -> Nondet cs m a
 > execute exe = Typed . return . Execute $ (untyped . exe)
 
-With `execute` computations can be delayed to be rexecuted with the
+With `execute` computations can be delayed to be reexecuted with the
 current constraint store whenever they are demanded. This is useful to
 avoid unessary branching when narrowing logic variables. Use with
 care: `execute` intentionally destroys sharing!
