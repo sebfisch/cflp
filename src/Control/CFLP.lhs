@@ -13,7 +13,7 @@ functional-logic programming in Haskell.
 >
 > module Control.CFLP (
 >
->   CFLP, CS, Computation, eval, evalPrint,
+>   CFLP, CS, Computation, eval, evalPartial, evalPrint,
 >
 >   Strategy, depthFirst,
 >
@@ -70,22 +70,27 @@ list.
 
 The strategy of the list monad is depth-first search.
 
-> eval :: (CFLP CS m, MonadSolve CS m m', Data a)
->      => Strategy m' -> (CS -> ID -> Nondet CS m a)
->      -> IO [a]
-> eval enumerate op = do
+> evaluate :: (CFLP CS m, MonadSolve CS m m')
+>          => (Nondet CS m a -> CS -> m' b)
+>          -> Strategy m' -> (CS -> ID -> Nondet CS m a)
+>          -> IO [b]
+> evaluate evalNondet enumerate op = do
 >   i <- initID
->   let xs = enumerate $ liftM prim $
->             groundNormalForm (op noConstraints i) noConstraints
->   return xs
+>   return $ enumerate $ evalNondet (op noConstraints i) noConstraints
 
-The `eval` function enumerates the non-deterministic solutions of a
+The `evaluate` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
+> eval, evalPartial :: (CFLP CS m, MonadSolve CS m m', Data a)
+>                   => Strategy m' -> (CS -> ID -> Nondet CS m a)
+>                   -> IO [a]
+> eval        s = liftM (map prim) . evaluate groundNormalForm  s
+> evalPartial s = liftM (map prim) . evaluate partialNormalForm s
+>
 > evalPrint :: (CFLP CS m, MonadSolve CS m m', Data a, Show a)
 >           => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >           -> IO ()
-> evalPrint s op = eval s op >>= printSols
+> evalPrint s op = evaluate partialNormalForm s op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
@@ -99,7 +104,14 @@ constraint functional-logic computation according to a given strategy.
 >     then mapM_ print xs
 >     else printSols xs
 
-For convenience, we provide an `evalPrint` operation that
-interactively shows solutions of a constraint functional-logic
-computation.
+We provide
+
+  * an `eval` operation to compute Haskell terms from non-determinitic
+    data,
+
+  * an operation `evalPartial` to compute partial Haskell terms where
+    logic variables are replaced with an error, and
+
+  * an `evalPrint` operation that interactively shows (partial)
+    solutions of a constraint functional-logic computation.
 
