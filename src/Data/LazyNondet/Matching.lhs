@@ -117,7 +117,7 @@ non-deterministic values that can be used with `caseOf`.
 >   withHNF x $ \hnf cs ->
 >   case hnf of
 >     FreeVar _ y -> caseOf_ (Typed y) bs def cs
->     Execute exe -> caseOf_ (Typed (exe cs)) bs def cs
+>     Delayed res -> caseOf_ (Typed (res cs)) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >

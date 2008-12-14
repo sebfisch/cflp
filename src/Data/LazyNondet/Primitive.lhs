@@ -92,7 +92,7 @@ first time.
 >     FreeVar u@(ID us) y ->
 >       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
 >             . lkp (uniqFromSupply us)
->     Execute exe -> get >>= nf lkp cns fv . exe
+>     Delayed resume -> get >>= nf lkp cns fv . resume
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)

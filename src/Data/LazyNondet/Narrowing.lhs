@@ -59,7 +59,7 @@ avoid the reexecution of a non-deterministic generator.
 > narrowWithPolicy cs u = x
 >  where
 >   x = case policy x of
->         OnDemand   -> execute (`narrow`u)
+>         OnDemand   -> delayed (`narrow`u)
 >         OnCreation -> narrow cs u
 >
 > policy :: Narrow cs a => Nondet cs m a -> NarrowPolicy cs a

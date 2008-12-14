@@ -13,7 +13,7 @@ non-deterministic data.
 >
 >   ID(..), NormalForm(..), HeadNormalForm(..), Untyped, Nondet(..),
 >
->   mkHNF, freeVar, execute
+>   mkHNF, freeVar, delayed
 >
 > ) where
 >
@@ -37,7 +37,7 @@ types and the `NormalForm` type.
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
 >   | FreeVar ID (Untyped cs m)
->   | Execute (cs -> Untyped cs m)
+>   | Delayed (cs -> Untyped cs m)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
@@ -70,13 +70,13 @@ that creates the variable.
 The function `freeVar` is used to put a name around a narrowed free
 variable.
 
-> execute :: Monad m => (cs -> Nondet cs m a) -> Nondet cs m a
-> execute exe = Typed . return . Execute $ (untyped . exe)
+> delayed :: Monad m => (cs -> Nondet cs m a) -> Nondet cs m a
+> delayed resume = Typed . return . Delayed $ (untyped . resume)
 
-With `execute` computations can be delayed to be reexecuted with the
+With `delayed` computations can be delayed to be reexecuted with the
 current constraint store whenever they are demanded. This is useful to
 avoid unessary branching when narrowing logic variables. Use with
-care: `execute` intentionally destroys sharing!
+care: `delayed` intentionally destroys sharing!
 
 `Show` Instances
 ----------------
@@ -84,7 +84,7 @@ care: `execute` intentionally destroys sharing!
 > instance Show (HeadNormalForm cs [])
 >  where
 >   show (FreeVar (ID u) _) = show (uniqFromSupply u)
->   show (Execute _) = "<delayed>"
+>   show (Delayed _) = "<delayed>"
 >   show (Cons typ idx args) 
 >     | null args = show con
 >     | otherwise = unwords (("("++show con):map show args++[")"])
@@ -101,7 +101,7 @@ care: `execute` intentionally destroys sharing!
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
 >   show (FreeVar (ID u) _)  = show (uniqFromSupply u)
->   show (Execute _)         = "<delayed>"
+>   show (Delayed _)         = "<delayed>"
 >   show (Cons typ idx [])   = show (indexConstr typ idx)
 >   show (Cons typ idx args) =
 >     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 
