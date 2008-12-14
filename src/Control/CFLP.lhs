@@ -90,7 +90,7 @@ constraint functional-logic computation according to a given strategy.
 > evalPrint :: (CFLP CS m, MonadSolve CS m m', Data a, Show a)
 >           => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >           -> IO ()
-> evalPrint s op = evaluate partialNormalForm s op >>= printSols
+> evalPrint s op = evaluate groundNormalForm s op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
