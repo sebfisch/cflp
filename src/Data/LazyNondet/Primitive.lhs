@@ -92,7 +92,7 @@ first time.
 >     FreeVar u@(ID us) y ->
 >       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
 >             . lkp (uniqFromSupply us)
->     Delayed resume -> get >>= nf lkp cns fv . resume
+>     Delayed _ resume -> get >>= nf lkp cns fv . resume
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)
@@ -123,7 +123,7 @@ data that is used to define a typed equality test in the
 >   hnf <- solve x
 >   case hnf of
 >     FreeVar _ y -> solveCons y
->     Delayed res -> get >>= solveCons . res
+>     Delayed _ res -> get >>= solveCons . res
 >     _ -> return hnf
 
 The function `solveCons` is like `solve` but always yields a

@@ -37,7 +37,7 @@ types and the `NormalForm` type.
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
 >   | FreeVar ID (Untyped cs m)
->   | Delayed (cs -> Untyped cs m)
+>   | Delayed (cs -> Bool) (cs -> Untyped cs m)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
@@ -70,13 +70,17 @@ that creates the variable.
 The function `freeVar` is used to put a name around a narrowed free
 variable.
 
-> delayed :: Monad m => (cs -> Nondet cs m a) -> Nondet cs m a
-> delayed resume = Typed . return . Delayed $ (untyped . resume)
+> delayed :: Monad m => (cs -> Bool) -> (cs -> Nondet cs m a) -> Nondet cs m a
+> delayed p resume = Typed . return . Delayed p $ (untyped . resume)
 
 With `delayed` computations can be delayed to be reexecuted with the
 current constraint store whenever they are demanded. This is useful to
 avoid unessary branching when narrowing logic variables. Use with
 care: `delayed` intentionally destroys sharing!
+
+The first parameter is a predicate on constraint stores that specifies
+whether the result of pattern matching the constructed delayed value
+should be delayed again.
 
 `Show` Instances
 ----------------
@@ -84,7 +88,7 @@ care: `delayed` intentionally destroys sharing!
 > instance Show (HeadNormalForm cs [])
 >  where
 >   show (FreeVar (ID u) _) = show (uniqFromSupply u)
->   show (Delayed _) = "<delayed>"
+>   show (Delayed _ _) = "<delayed>"
 >   show (Cons typ idx args) 
 >     | null args = show con
 >     | otherwise = unwords (("("++show con):map show args++[")"])
@@ -101,7 +105,7 @@ care: `delayed` intentionally destroys sharing!
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
 >   show (FreeVar (ID u) _)  = show (uniqFromSupply u)
->   show (Delayed _)         = "<delayed>"
+>   show (Delayed _ _)         = "<delayed>"
 >   show (Cons typ idx [])   = show (indexConstr typ idx)
 >   show (Cons typ idx args) =
 >     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 

@@ -10,9 +10,9 @@ non-deterministic programming.
 >
 >   ID, initID, withUnique,
 >
->   Narrow(..), NarrowPolicy(..), unknown, 
+>   Narrow(..), unknown, 
 >
->   failure, oneOf,
+>   failure, oneOf, (?),
 >
 >   withHNF, caseOf, caseOf_, Match,
 >
@@ -28,4 +28,3 @@ non-deterministic programming.
 > import Data.LazyNondet.Matching
 > import Data.LazyNondet.Narrowing
 > import Data.LazyNondet.Primitive
-> import Data.LazyNondet.Combinators

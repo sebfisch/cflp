@@ -32,7 +32,6 @@ Library
                     Data.LazyNondet.Matching,
                     Data.LazyNondet.Narrowing,
                     Data.LazyNondet.Primitive,
-                    Data.LazyNondet.Combinators,
                     Control.CFLP.Tests,
                     Control.CFLP.Tests.CallTimeChoice
   Hs-Source-Dirs:   src

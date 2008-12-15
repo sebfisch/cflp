@@ -6,18 +6,21 @@
 >       TypeFamilies,
 >       FlexibleContexts,
 >       FlexibleInstances,
+>       MultiParamTypeClasses,
+>       FunctionalDependencies,
 >       ExistentialQuantification
 >   #-}
 >
 > module Data.LazyNondet.Matching (
 >
->   Match, match, withHNF, caseOf, caseOf_
+>   Match, match, ConsRep(..), cons,
+>
+>   withHNF, failure, caseOf, caseOf_
 >
 > ) where
 >
 > import Data.Data
 > import Data.LazyNondet.Types
-> import Data.LazyNondet.Combinators
 >
 > import Control.Monad.State
 > import Control.Monad.Constraint
@@ -106,6 +109,11 @@ function to typed versions of these values.
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
 
+> failure :: MonadPlus m => Nondet cs m a
+> failure = Typed mzero
+
+Failure is just a type version of `mzero`.
+
 > caseOf :: (MonadSolve cs m m, MonadConstr Choice m)
 >        => Nondet cs m a -> [Match a cs m b] -> cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
@@ -117,8 +125,9 @@ non-deterministic values that can be used with `caseOf`.
 >   withHNF x $ \hnf cs ->
 >   case hnf of
 >     FreeVar _ y -> caseOf_ (Typed y) bs def cs
->     Delayed res -> -- caseOf_ (Typed (res cs)) bs def cs
->       delayed (\cs -> caseOf_ (Typed (res cs)) bs def cs)
+>     Delayed p res
+>       | p cs      -> delayed p (\cs -> caseOf_ (Typed (res cs)) bs def cs)
+>       | otherwise -> caseOf_ (Typed (res cs)) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
@@ -133,3 +142,41 @@ causes an additional slowdown because of the list lookup. It remains
 to be checked how big the slowdown of using `caseOf` is compared to
 using `withHNF` directly.
 
+> class MkCons cs m a b | b -> m, b -> cs
+>  where
+>   mkCons :: a -> [Untyped cs m] -> b
+>
+> instance (Monad m, Data a) => MkCons cs m a (Nondet cs m t)
+>  where
+>   mkCons c args = Typed (return (mkHNF (toConstr c) (reverse args)))
+>
+> instance MkCons cs m b c => MkCons cs m (a -> b) (Nondet cs m t -> c)
+>  where
+>   mkCons c xs x = mkCons (c undefined) (untyped x:xs)
+>
+> cons :: MkCons cs m a b => a -> b
+> cons c = mkCons c []
+
+The overloaded operation `cons` takes a Haskell constructor and yields
+a corresponding constructor function for non-deterministic values.
+
+> class ConsRep a
+>  where
+>   consRep :: a -> Constr
+>
+> instance ConsRep b => ConsRep (a -> b)
+>  where
+>   consRep c = consRep (c undefined)
+
+We provide an overloaded operation `consRep` that yields a `Constr`
+representation for a constructor rather than for a constructed value
+like `Data.Data.toConstr` does. We do not provide the base instance
+
+    instance Data a => ConsRep a
+     where
+      consRep = toConstr
+
+because this would require to allow undecidable instances. As a
+consequence, specialized base instances need to be defined for every
+used datatype. See `Data.LazyNondet.List` for an example of how to get
+the representation of polymorphic constructors and destructors.
