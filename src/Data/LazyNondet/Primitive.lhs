@@ -97,8 +97,8 @@ first time.
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)
 
-The `nf` function is used by all normal-form functions and performs al
-the work.
+The `nf` function is used by all normal-form functions and performs
+all the work.
 
 > prim_eq :: MonadSolve cs m m
 >         => Untyped cs m -> Untyped cs m -> StateT cs m Bool
@@ -115,7 +115,7 @@ the work.
 
 We provide a generic comparison function for untyped non-deterministic
 data that is used to define a typed equality test in the
-`Data.LazyNondet.Bool` module.
+`Data.LazyNondet.Types.Bool` module.
 
 > solveCons :: MonadSolve cs m m
 >           => Untyped cs m -> StateT cs m (HeadNormalForm cs m)

@@ -59,7 +59,7 @@ In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
 enable pattern matching on the index.
 
-Free (logic) variables are represented by `Unknown u x` where `u` is a
+Free (logic) variables are represented by `FreeVar u x` where `u` is a
 uniqe identifier and `x` represents the result of narrowing the
 variable according to the constraint store passed to the operation
 that creates the variable.
