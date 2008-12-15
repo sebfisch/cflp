@@ -24,7 +24,6 @@ functional-logic programming in Haskell.
 > ) where
 >
 > import Data.LazyNondet
-> import Data.LazyNondet.Primitive
 > import Data.LazyNondet.Types.Bool
 > import Data.LazyNondet.Types.List
 >
