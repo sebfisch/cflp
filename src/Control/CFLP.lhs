@@ -115,9 +115,3 @@ We provide
 
   * an `evalPrint` operation that interactively shows (partial)
     solutions of a constraint functional-logic computation.
-
-> main = do
->   i <- initID
->   print (goal noConstraints i)
->  where goal :: Computation [] Bool
->        goal = oneOf [true,false]

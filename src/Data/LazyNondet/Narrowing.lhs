@@ -15,7 +15,6 @@
 > import Data.Maybe
 > import Data.LazyNondet.Types
 >
-> import Control.Monad
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
