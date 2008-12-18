@@ -13,6 +13,7 @@ License:       BSD3
 License-File:  LICENSE
 Author:        Sebastian Fischer
 Maintainer:    sebf@informatik.uni-kiel.de
+Bug-Reports:   mailto:sebf@informatik.uni-kiel.de
 Homepage:      http://www-ps.informatik.uni-kiel.de/~sebf/projects/cflp.html
 Build-Type:    Custom
 Stability:     alpha
