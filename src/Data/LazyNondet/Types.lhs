@@ -104,7 +104,7 @@ should be delayed again.
 >
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
->   show (FreeVar (ID u) _)  = show (uniqFromSupply u)
+>   show (FreeVar (ID u) _)  = '_':show (uniqFromSupply u)
 >   show (Delayed _ _)         = "<delayed>"
 >   show (Cons typ idx [])   = show (indexConstr typ idx)
 >   show (Cons typ idx args) =
@@ -115,7 +115,7 @@ forms and non-deterministic values.
 
 > instance Show NormalForm
 >  where
->   showsPrec _ (Var u) = shows u
+>   showsPrec _ (Var u) = ('_':) . shows u
 >   showsPrec _ (NormalForm cons []) = shows cons
 >   showsPrec n x@(NormalForm cons args)
 >     | Just xs <- fromList x = shows xs
