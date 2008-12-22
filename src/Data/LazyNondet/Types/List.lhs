@@ -42,8 +42,8 @@ for the element type.
 
 > instance (ChoiceStore cs, Narrow cs a) => Narrow cs [a]
 >  where
->   narrow cs = withUnique $ \u1 u2 -> 
->                 oneOf [nil, unknown u1 ^: unknown u2] cs
+>   narrow cs u = withUnique (\u1 u2 -> 
+>                   (oneOf [nil, unknown u1 ^: unknown u2] cs u)) u
 
 Some operations on lists:
 

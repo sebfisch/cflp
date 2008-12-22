@@ -118,7 +118,8 @@ forms and non-deterministic values.
 >   showsPrec _ (NormalForm cons []) = shows cons
 >   showsPrec n x@(NormalForm cons args)
 >     | Just xs <- fromList x = shows xs
->     | n == 0    = shows cons . foldr1 (\y z -> (' ':).y.z) (map shows args)
+>     | n == 0 = shows cons . (' ':) . foldr1 (\y z -> y.(' ':).z)
+>                 (map (showsPrec 1) args)
 >     | otherwise = ('(':) . shows x . (')':)
 >
 > fromList :: NormalForm -> Maybe [NormalForm]

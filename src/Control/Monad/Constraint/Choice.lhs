@@ -34,7 +34,7 @@ We define an interface for choice stores that provide an operation to
 lookup a previously made choice.
 
 > newtype Choice = Choice (Int,Int)
-> newtype ChoiceStoreUnique = ChoiceStore (IM.IntMap Int)
+> newtype ChoiceStoreUnique = ChoiceStore (IM.IntMap Int) deriving Show
 >
 > noChoices :: ChoiceStoreUnique
 > noChoices = ChoiceStore IM.empty

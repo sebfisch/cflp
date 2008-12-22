@@ -49,7 +49,7 @@ We also provide a generic operation `nondet` to translate instances of
 the `Data` class into non-deterministic data.
 
 > groundNormalForm :: MonadSolve cs m m' => Nondet cs m a -> cs -> m' NormalForm
-> groundNormalForm  = evalStateT . gnf . untyped
+> groundNormalForm = evalStateT . gnf . untyped
 >
 > partialNormalForm :: (MonadSolve cs m m', ChoiceStore cs)
 >                   => Nondet cs m a -> cs -> m' NormalForm
