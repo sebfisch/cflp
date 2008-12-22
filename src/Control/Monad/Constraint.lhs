@@ -148,7 +148,7 @@ the monadic values and threaded additionally.
 >
 > instance MonadTrans (ConstrT cs)
 >  where
->   lift x = ConstrT (x >>= return . Return)
+>   lift = ConstrT . liftM Return
 
 We specify that a transformed monad is indeed a monad, that it is an
 instance of `MonadPlus` if the base monad is, and that, `ConstrT`

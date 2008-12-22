@@ -49,7 +49,7 @@ Some operations on lists:
 
 > null :: (MonadSolve cs m m, MonadConstr Choice m)
 >      => Nondet cs m [a] -> cs -> Nondet cs m Bool
-> null xs = caseOf_ xs [pNil (\_ -> true)] false
+> null xs = caseOf_ xs [pNil (const true)] false
 >
 > head :: (MonadSolve cs m m, MonadConstr Choice m)
 >      => Nondet cs m [a] -> cs -> Nondet cs m a

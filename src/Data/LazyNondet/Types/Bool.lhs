@@ -45,7 +45,7 @@ Some operations with `Bool`s:
 
 > not :: (MonadSolve cs m m, MonadConstr Choice m)
 >     => Nondet cs m Bool -> cs -> Nondet cs m Bool
-> not x = caseOf_ x [pFalse (\_ -> true)] false
+> not x = caseOf_ x [pFalse (const true)] false
 >
 > (===) :: MonadSolve cs m m
 >       => Nondet cs m a -> Nondet cs m a -> cs -> Nondet cs m Bool

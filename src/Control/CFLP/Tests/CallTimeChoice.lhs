@@ -34,7 +34,7 @@ that collects all defined tests.
 >
 > ignot :: CFLP cs m
 >       => Nondet cs m a -> Nondet cs m Bool -> cs -> Nondet cs m Bool
-> ignot _ x = not x
+> ignot _ = not
 
 This test checks a function with two arguments, where the first must
 be ignored. Any changes in the translation scheme must not lead to
@@ -45,7 +45,7 @@ check demand than with using `error`. So an *error* is considered a
 > sharedVarsAreEqual :: Assertion
 > sharedVarsAreEqual = assertResults comp [[False,False],[True,True]]
 >  where
->   comp _ u = two (unknown u)
+>   comp _ = two . unknown
 >
 > two :: Monad m => Nondet cs m a -> Nondet cs m [a]
 > two x = x ^: x ^: nil

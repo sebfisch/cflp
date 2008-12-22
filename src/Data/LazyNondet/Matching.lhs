@@ -148,7 +148,7 @@ using `withHNF` directly.
 >
 > instance (Monad m, Data a) => MkCons cs m a (Nondet cs m t)
 >  where
->   mkCons c args = Typed (return (mkHNF (toConstr c) (reverse args)))
+>   mkCons c = Typed . return . mkHNF (toConstr c) . reverse
 >
 > instance MkCons cs m b c => MkCons cs m (a -> b) (Nondet cs m t -> c)
 >  where

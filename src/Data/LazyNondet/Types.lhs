@@ -53,7 +53,7 @@ logic variables by overloading. The phantom type must be the Haskell
 data type that should be used for conversion into primitive data.
 
 > mkHNF :: Constr -> [Untyped cs m] -> HeadNormalForm cs m
-> mkHNF c args = Cons (constrType c) (constrIndex c) args
+> mkHNF c = Cons (constrType c) (constrIndex c)
 
 In head-normal forms we split the constructor representation into a
 representation of the data type and the index of the constructor, to
@@ -91,7 +91,7 @@ should be delayed again.
 >   show (Delayed _ _) = "<delayed>"
 >   show (Cons typ idx args) 
 >     | null args = show con
->     | otherwise = unwords (("("++show con):map show args++[")"])
+>     | otherwise = unwords (('(':show con):map show args++[")"])
 >    where con = indexConstr typ idx
 >
 > instance Show (Nondet cs [] a)
