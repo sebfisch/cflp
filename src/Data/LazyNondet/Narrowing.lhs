@@ -18,13 +18,13 @@
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> import UniqSupply
+> import Data.Supply
 >
 > unknown :: (MonadConstr Choice m, Narrow cs a) => ID -> Nondet cs m a
 > unknown u = freeVar u (delayed (redelay u) (\cs -> narrow cs u))
 >
 > redelay :: ChoiceStore cs => ID -> cs -> Bool
-> redelay (ID us) = isNothing . lookupChoice (uniqFromSupply us)
+> redelay (ID us) = isNothing . lookupChoice (supplyValue us)
 
 The application of `unknown` to a constraint store and a unique
 identifier represents a logic variable of an arbitrary type. 
@@ -52,7 +52,7 @@ executions and *not* reexecuted.
 
 > oneOf :: (MonadConstr Choice m, ChoiceStore cs)
 >       => [Nondet cs m a] -> cs -> ID -> Nondet cs m a
-> oneOf xs cs (ID us) = Typed (choice cs (uniqFromSupply us) (map untyped xs))
+> oneOf xs cs (ID us) = Typed (choice cs (supplyValue us) (map untyped xs))
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in

@@ -31,8 +31,6 @@ functional-logic programming in Haskell.
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> import StaticFlagParser ( parseStaticFlags )
->
 > class (MonadConstr Choice m,
 >        ConstraintStore Choice cs,
 >        ChoiceStore cs,
@@ -76,7 +74,6 @@ The strategy of the list monad is depth-first search.
 >          -> Strategy m' -> (CS -> ID -> Nondet CS m a)
 >          -> IO [b]
 > evaluate evalNondet enumerate op = do
->   parseStaticFlags []
 >   i <- initID
 >   return $ enumerate $ evalNondet (op noConstraints i) noConstraints
 

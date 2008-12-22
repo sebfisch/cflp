@@ -24,46 +24,43 @@ the same value if they are shared.
 > import Control.Monad.State
 > import Control.Monad.Constraint
 >
-> import Unique
-> import UniqFM
-
-We borrow unique identifiers from the package `ghc` which is hidden by
-default.
-
+> import qualified Data.IntMap as IM
+>
 > class ChoiceStore cs
 >  where
->   lookupChoice :: Unique -> cs -> Maybe Int
+>   lookupChoice :: Int -> cs -> Maybe Int
 
 We define an interface for choice stores that provide an operation to
 lookup a previously made choice.
 
-> newtype Choice = Choice (Unique,Int)
-> newtype ChoiceStoreUnique = ChoiceStore (UniqFM Int)
+> newtype Choice = Choice (Int,Int)
+> newtype ChoiceStoreUnique = ChoiceStore (IM.IntMap Int)
 >
 > noChoices :: ChoiceStoreUnique
-> noChoices = ChoiceStore emptyUFM
+> noChoices = ChoiceStore IM.empty
 >
 > instance ChoiceStore ChoiceStoreUnique
 >  where
->   lookupChoice u (ChoiceStore cs) = lookupUFM_Directly cs u
+>   lookupChoice u (ChoiceStore cs) = IM.lookup u cs
 
-A finite map mapping `Unique`s to integers is a `ChoiceStore`.
+A finite map mapping unique identifiers to integers is a
+`ChoiceStore`.
 
 > instance ConstraintStore Choice ChoiceStoreUnique
 >  where
 >   assert (Choice (u,x)) = do
 >     ChoiceStore cs <- get
->     maybe (put (ChoiceStore (addToUFM_Directly cs u x)))
+>     maybe (put (ChoiceStore (IM.insert u x cs)))
 >           (guard . (x==))
->           (lookupUFM_Directly cs u)
+>           (IM.lookup u cs)
 
-Choices are labeled with a `Unique`, so we can store them in a
-`UniqFM` making it an instance of `ConstraintStore`.
+Choices are labeled with a unique identifier, so we can store them in
+an `IntMap` making it an instance of `ConstraintStore`.
 
 The `assert` operations fails to insert conflicting choices.
 
 > choice :: (MonadConstr Choice m, ChoiceStore cs)
->        => cs -> Unique -> [m a] -> m a
+>        => cs -> Int -> [m a] -> m a
 > choice cs u xs =
 >   maybe (foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..] $ xs)
 >         (xs!!)
@@ -81,7 +78,6 @@ If a choice with the same label has been created previously and the
 label is already constrained to an alternative, then this alternative
 is returned directly and no choice is created.
 
-This situation may occur if a shared logic variable is renarrowed
-whenever it is demanded rather than shared and only narrowed on
-creation.
+This situation occurs when a shared logic variable is renarrowed when
+it is demanded again during a computation.
 

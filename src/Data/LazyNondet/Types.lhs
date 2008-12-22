@@ -21,12 +21,11 @@ non-deterministic data.
 >
 > import Control.Monad.Constraint
 >
-> import Unique
-> import UniqSupply
+> import Data.Supply
 >
-> newtype ID = ID UniqSupply
+> newtype ID = ID (Supply Int)
 >
-> data NormalForm = NormalForm Constr [NormalForm] | Var Unique
+> data NormalForm = NormalForm Constr [NormalForm] | Var Int
 
 The normal form of data is represented by the type `NormalForm` which
 defines a tree of constructors and logic variables. The type `Constr`
@@ -87,7 +86,7 @@ should be delayed again.
 
 > instance Show (HeadNormalForm cs [])
 >  where
->   show (FreeVar (ID u) _) = show (uniqFromSupply u)
+>   show (FreeVar (ID u) _) = '_':show (supplyValue u)
 >   show (Delayed _ _) = "<delayed>"
 >   show (Cons typ idx args) 
 >     | null args = show con
@@ -104,7 +103,7 @@ should be delayed again.
 >
 > instance Show (HeadNormalForm cs (ConstrT cs []))
 >  where
->   show (FreeVar (ID u) _)  = '_':show (uniqFromSupply u)
+>   show (FreeVar (ID u) _)  = '_':show (supplyValue u)
 >   show (Delayed _ _)         = "<delayed>"
 >   show (Cons typ idx [])   = show (indexConstr typ idx)
 >   show (Cons typ idx args) =

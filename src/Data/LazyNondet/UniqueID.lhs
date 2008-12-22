@@ -18,13 +18,13 @@
 >
 > import Control.Monad
 >
-> import UniqSupply
+> import Data.Supply
 
 Non-deterministic computations need a supply of unique identifiers in
 order to constrain shared choices.
 
 > initID :: IO ID
-> initID = liftM ID $ mkSplitUniqSupply 'x'
+> initID = liftM ID newNumSupply
 >
 > class With x a
 >  where
@@ -48,8 +48,7 @@ order to constrain shared choices.
 >   type M ID (ID -> a) = M ID a
 >   type T ID (ID -> a) = T ID a
 >
->   with f (ID us) = withUnique (f (ID vs)) (ID ws)
->    where (vs,ws) = splitUniqSupply us
+>   with f (ID us) = with (f (ID (supplyLeft us))) (ID (supplyRight us))
 >
 > withUnique :: With ID a => a -> ID -> Nondet (C ID a) (M ID a) (T ID a)
 > withUnique = with

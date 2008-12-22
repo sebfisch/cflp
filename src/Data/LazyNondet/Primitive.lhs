@@ -21,8 +21,7 @@
 > import Control.Monad.Constraint
 > import Control.Monad.Constraint.Choice
 >
-> import Unique
-> import UniqSupply
+> import Data.Supply
 >
 > prim :: Data a => NormalForm -> a
 > prim (Var u) = error $ "demand on logic variable " ++ show u
@@ -66,7 +65,7 @@ variables while ground normal forms are data terms.
 > gnf = nf (\_ _ -> Just ()) NormalForm mkVar
 >
 > mkVar :: ID -> a -> NormalForm
-> mkVar (ID us) _ = Var (uniqFromSupply us)
+> mkVar (ID us) _ = Var (supplyValue us)
 >
 > pnf :: (MonadSolve cs m m', ChoiceStore cs)
 >     => Untyped cs m -> StateT cs m' NormalForm
@@ -82,7 +81,7 @@ that `x` will be bound in the result when we encounter it for the
 first time.
 
 > nf :: MonadSolve cs m m'
->    => (Unique -> cs -> Maybe a)
+>    => (Int -> cs -> Maybe a)
 >    -> (Constr -> [nf] -> nf)
 >    -> (ID -> Untyped cs m -> nf)
 >    -> Untyped cs m -> StateT cs m' nf
@@ -91,7 +90,7 @@ first time.
 >   case hnf of
 >     FreeVar u@(ID us) y ->
 >       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
->             . lkp (uniqFromSupply us)
+>             . lkp (supplyValue us)
 >     Delayed _ resume -> get >>= nf lkp cns fv . resume
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
