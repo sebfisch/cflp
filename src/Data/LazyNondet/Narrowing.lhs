@@ -15,12 +15,13 @@
 > import Data.Maybe
 > import Data.LazyNondet.Types
 >
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
+>
+> import Control.Constraint.Choice
 >
 > import Data.Supply
 >
-> unknown :: (MonadConstr Choice m, Narrow cs a) => ID -> Nondet cs m a
+> unknown :: (MonadUpdate cs m, Narrow cs a) => ID -> Nondet cs m a
 > unknown u = freeVar u (delayed (redelay u) (\cs -> narrow cs u))
 >
 > redelay :: ChoiceStore cs => ID -> cs -> Bool
@@ -31,7 +32,7 @@ identifier represents a logic variable of an arbitrary type.
 
 > class ChoiceStore cs => Narrow cs a
 >  where
->   narrow :: MonadConstr Choice m => cs -> ID -> Nondet cs m a
+>   narrow :: MonadUpdate cs m => cs -> ID -> Nondet cs m a
 
 Logic variables of type `a` can be narrowed to head-normal form if
 there is an instance of the type class `Narrow`. A constraint store
@@ -40,7 +41,7 @@ that supports choices. Usually, `narrow` will be implemented as a
 non-deterministic generator using `oneOf`, but for specific types
 different strategies may be implemented.
 
-> (?) :: (MonadConstr Choice m, ChoiceStore cs)
+> (?) :: (MonadUpdate cs m, ChoiceStore cs)
 >     => Nondet cs m a -> Nondet cs m a -> ID -> Nondet cs m a
 > (x ? y) u = delayed (redelay u) (\cs -> oneOf [x,y] cs u)
 
@@ -50,7 +51,7 @@ demanded. Although the choice itself is reexecuted according to the
 current constraint store, the arguments of `(?)` are shared among all
 executions and *not* reexecuted.
 
-> oneOf :: (MonadConstr Choice m, ChoiceStore cs)
+> oneOf :: (MonadUpdate cs m, ChoiceStore cs)
 >       => [Nondet cs m a] -> cs -> ID -> Nondet cs m a
 > oneOf xs cs (ID us) = Typed (choice cs (supplyValue us) (map untyped xs))
 

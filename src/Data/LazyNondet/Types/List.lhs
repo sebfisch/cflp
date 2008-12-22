@@ -15,8 +15,9 @@ This module provides non-deterministic lists.
 > import Data.LazyNondet
 > import Data.LazyNondet.Types.Bool
 >
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
+>
+> import Control.Constraint.Choice
 >
 > instance ConsRep [()] where consRep = toConstr
 >
@@ -47,15 +48,12 @@ for the element type.
 
 Some operations on lists:
 
-> null :: (MonadSolve cs m m, MonadConstr Choice m)
->      => Nondet cs m [a] -> cs -> Nondet cs m Bool
+> null :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m Bool
 > null xs = caseOf_ xs [pNil (const true)] false
 >
-> head :: (MonadSolve cs m m, MonadConstr Choice m)
->      => Nondet cs m [a] -> cs -> Nondet cs m a
+> head :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m a
 > head l = caseOf l [pCons (\_ x _ -> x)]
 >
-> tail :: (MonadSolve cs m m, MonadConstr Choice m)
->      => Nondet cs m [a] -> cs -> Nondet cs m [a]
+> tail :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m [a]
 > tail l = caseOf l [pCons (\_ _ xs -> xs)]
 

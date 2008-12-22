@@ -17,8 +17,9 @@ This module provides non-deterministic booleans.
 > import Data.LazyNondet.Primitive
 >
 > import Control.Monad.State
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
+>
+> import Control.Constraint.Choice
 >
 > instance ConsRep Bool where consRep = toConstr
 >
@@ -43,11 +44,10 @@ an instance of the type class `Narrow`.
 
 Some operations with `Bool`s:
 
-> not :: (MonadSolve cs m m, MonadConstr Choice m)
->     => Nondet cs m Bool -> cs -> Nondet cs m Bool
+> not :: Update cs m m => Nondet cs m Bool -> cs -> Nondet cs m Bool
 > not x = caseOf_ x [pFalse (const true)] false
 >
-> (===) :: MonadSolve cs m m
+> (===) :: Update cs m m
 >       => Nondet cs m a -> Nondet cs m a -> cs -> Nondet cs m Bool
 > (x === y) cs = Typed $ do
 >   eq <- evalStateT (prim_eq (untyped x) (untyped y)) cs

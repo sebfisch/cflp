@@ -28,31 +28,28 @@ functional-logic programming in Haskell.
 > import Data.LazyNondet.Types.List
 >
 > import Control.Monad.State
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
 >
-> class (MonadConstr Choice m,
->        ConstraintStore Choice cs,
->        ChoiceStore cs,
->        MonadSolve cs m m)
->  => CFLP cs m
+> import Control.Constraint.Choice
+>
+> class (MonadUpdate s m, Update s m m, ChoiceStore s) => CFLP s m
 
 The type class `CFLP` is a shortcut for the type-class constraints on
 constraint functional-logic computations that are parameterized over a
 constraint store and a constraint monad. Hence, such computations can
 be executed with different constraint stores and search strategies.
 
-> instance CFLP ChoiceStoreUnique (ConstrT ChoiceStoreUnique [])
+> instance CFLP ChoiceStoreIM (UpdateT ChoiceStoreIM [])
 
 We declare instances for every combination of monad and constraint
 store that we intend to use.
 
-> type CS = ChoiceStoreUnique
+> type CS = ChoiceStoreIM
 >
 > noConstraints :: CS
 > noConstraints = noChoices
 >
-> type Computation m a = CS -> ID -> Nondet CS (ConstrT CS m) a
+> type Computation m a = CS -> ID -> Nondet CS (UpdateT CS m) a
 
 Currently, the constraint store used to evaluate constraint
 functional-logic programs is simply a `ChoiceStore`. It will be a
@@ -69,7 +66,7 @@ list.
 
 The strategy of the list monad is depth-first search.
 
-> evaluate :: (CFLP CS m, MonadSolve CS m m')
+> evaluate :: (CFLP CS m, Update CS m m')
 >          => (Nondet CS m a -> CS -> m' b)
 >          -> Strategy m' -> (CS -> ID -> Nondet CS m a)
 >          -> IO [b]
@@ -80,13 +77,13 @@ The strategy of the list monad is depth-first search.
 The `evaluate` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
-> eval, evalPartial :: (CFLP CS m, MonadSolve CS m m', Data a)
+> eval, evalPartial :: (CFLP CS m, Update CS m m', Data a)
 >                   => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >                   -> IO [a]
 > eval        s = liftM (map prim) . evaluate groundNormalForm  s
 > evalPartial s = liftM (map prim) . evaluate partialNormalForm s
 >
-> evalPrint :: (CFLP CS m, MonadSolve CS m m', Data a, Show a)
+> evalPrint :: (CFLP CS m, Update CS m m', Data a, Show a)
 >           => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >           -> IO ()
 > evalPrint s op = evaluate partialNormalForm s op >>= printSols

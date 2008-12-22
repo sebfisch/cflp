@@ -18,8 +18,9 @@
 > import Data.LazyNondet.Types
 >
 > import Control.Monad.State
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
+>
+> import Control.Constraint.Choice
 >
 > import Data.Supply
 >
@@ -48,10 +49,10 @@ variables.
 We also provide a generic operation `nondet` to translate instances of
 the `Data` class into non-deterministic data.
 
-> groundNormalForm :: MonadSolve cs m m' => Nondet cs m a -> cs -> m' NormalForm
+> groundNormalForm :: Update cs m m' => Nondet cs m a -> cs -> m' NormalForm
 > groundNormalForm = evalStateT . gnf . untyped
 >
-> partialNormalForm :: (MonadSolve cs m m', ChoiceStore cs)
+> partialNormalForm :: (Update cs m m', ChoiceStore cs)
 >                   => Nondet cs m a -> cs -> m' NormalForm
 > partialNormalForm = evalStateT . pnf . untyped
 
@@ -61,13 +62,13 @@ deterministic values and can be converted into their Haskell
 representation. Partial normal forms may contain unbound logic
 variables while ground normal forms are data terms.
 
-> gnf :: MonadSolve cs m m' => Untyped cs m -> StateT cs m' NormalForm
+> gnf :: Update cs m m' => Untyped cs m -> StateT cs m' NormalForm
 > gnf = nf (\_ _ -> Just ()) NormalForm mkVar
 >
 > mkVar :: ID -> a -> NormalForm
 > mkVar (ID us) _ = Var (supplyValue us)
 >
-> pnf :: (MonadSolve cs m m', ChoiceStore cs)
+> pnf :: (Update cs m m', ChoiceStore cs)
 >     => Untyped cs m -> StateT cs m' NormalForm
 > pnf x = nf lookupChoice ((return.).mkHNF) ((return.).FreeVar) x
 >     >>= nf lookupChoice NormalForm mkVar
@@ -80,13 +81,13 @@ computing the normal form of `let x free in (x,not x)` we don't know
 that `x` will be bound in the result when we encounter it for the
 first time.
 
-> nf :: MonadSolve cs m m'
+> nf :: Update cs m m'
 >    => (Int -> cs -> Maybe a)
 >    -> (Constr -> [nf] -> nf)
 >    -> (ID -> Untyped cs m -> nf)
 >    -> Untyped cs m -> StateT cs m' nf
 > nf lkp cns fv x = do
->   hnf <- solve x
+>   hnf <- updateState x
 >   case hnf of
 >     FreeVar u@(ID us) y ->
 >       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
@@ -99,7 +100,7 @@ first time.
 The `nf` function is used by all normal-form functions and performs
 all the work.
 
-> prim_eq :: MonadSolve cs m m
+> prim_eq :: Update cs m m
 >         => Untyped cs m -> Untyped cs m -> StateT cs m Bool
 > prim_eq x y = do
 >   Cons _ ix xs <- solveCons x
@@ -116,10 +117,10 @@ We provide a generic comparison function for untyped non-deterministic
 data that is used to define a typed equality test in the
 `Data.LazyNondet.Types.Bool` module.
 
-> solveCons :: MonadSolve cs m m
+> solveCons :: Update cs m m
 >           => Untyped cs m -> StateT cs m (HeadNormalForm cs m)
 > solveCons x = do
->   hnf <- solve x
+>   hnf <- updateState x
 >   case hnf of
 >     FreeVar _ y -> solveCons y
 >     Delayed _ res -> get >>= solveCons . res

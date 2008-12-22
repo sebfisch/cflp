@@ -19,7 +19,7 @@ non-deterministic data.
 >
 > import Data.Data
 >
-> import Control.Monad.Constraint
+> import Control.Monad.Update
 >
 > import Data.Supply
 >
@@ -97,11 +97,11 @@ should be delayed again.
 >  where
 >   show = show . untyped
 >
-> instance Show (Nondet cs (ConstrT cs []) a)
+> instance Show (Nondet cs (UpdateT cs []) a)
 >  where
 >   show = show . untyped
 >
-> instance Show (HeadNormalForm cs (ConstrT cs []))
+> instance Show (HeadNormalForm cs (UpdateT cs []))
 >  where
 >   show (FreeVar (ID u) _)  = '_':show (supplyValue u)
 >   show (Delayed _ _)         = "<delayed>"

@@ -7,8 +7,7 @@
 >       FlexibleContexts,
 >       FlexibleInstances,
 >       MultiParamTypeClasses,
->       FunctionalDependencies,
->       ExistentialQuantification
+>       FunctionalDependencies
 >   #-}
 >
 > module Data.LazyNondet.Matching (
@@ -23,23 +22,22 @@
 > import Data.LazyNondet.Types
 >
 > import Control.Monad.State
-> import Control.Monad.Constraint
-> import Control.Monad.Constraint.Choice
+> import Control.Monad.Update
 >
-> withHNF :: (Monad m, MonadSolve cs m m)
+> withHNF :: (Monad m, Update cs m m)
 >         => Nondet cs m a
 >         -> (HeadNormalForm cs m -> cs -> Nondet cs m b)
 >         -> cs -> Nondet cs m b
 > withHNF x b cs = Typed (do
->   (hnf,cs') <- runStateT (solve (untyped x)) cs
+>   (hnf,cs') <- runStateT (updateState (untyped x)) cs
 >   untyped (b hnf cs'))
 
 The `withHNF` operation can be used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
 value. An updated constraint store is passed to the computation of the
 branch function. Collected constraints are kept attached to the
-computed value by using an appropriate instance of `MonadSolve` that
-does not eliminate them.
+computed value by using an appropriate instance of `Update` that does
+not eliminate them.
 
 > class WithUntyped a
 >  where
@@ -99,12 +97,11 @@ the list of untyped values and yields the result of applying the given
 function to typed versions of these values.
 
 > newtype Match a cs m b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
-> data Branch cs m a =
->   forall t . (WithUntyped t, cs ~ C t, m ~ M t, a ~ T t) => Branch t
+> newtype Branch cs m a = Branch ([Untyped cs m] -> Nondet cs m a)
 >
 > match :: (ConsRep a, WithUntyped b)
 >       => a -> (C b -> b) -> Match t (C b) (M b) (T b)
-> match c alt = Match (constrIndex (consRep c), Branch . alt)
+> match c alt = Match (constrIndex (consRep c), Branch . withUntyped . alt)
 
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
@@ -114,11 +111,11 @@ non-deterministic values that can be used with `caseOf`.
 
 Failure is just a type version of `mzero`.
 
-> caseOf :: (MonadSolve cs m m, MonadConstr Choice m)
+> caseOf :: Update cs m m
 >        => Nondet cs m a -> [Match a cs m b] -> cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
 >
-> caseOf_ :: (MonadSolve cs m m, MonadConstr Choice m)
+> caseOf_ :: Update cs m m
 >         => Nondet cs m a -> [Match a cs m b] -> Nondet cs m b
 >         -> cs -> Nondet cs m b
 > caseOf_ x bs def =
@@ -132,7 +129,7 @@ Failure is just a type version of `mzero`.
 >       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
 >
 > branch :: Branch cs m a -> [Untyped cs m] -> Nondet cs m a
-> branch (Branch alt) = withUntyped alt
+> branch (Branch alt) = alt
 
 We provide operations `caseOf_` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped
