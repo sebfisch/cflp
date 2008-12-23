@@ -97,11 +97,11 @@ the list of untyped values and yields the result of applying the given
 function to typed versions of these values.
 
 > newtype Match a cs m b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
-> newtype Branch cs m a = Branch ([Untyped cs m] -> Nondet cs m a)
+> type Branch cs m a = [Untyped cs m] -> Nondet cs m a
 >
 > match :: (ConsRep a, WithUntyped b)
 >       => a -> (C b -> b) -> Match t (C b) (M b) (T b)
-> match c alt = Match (constrIndex (consRep c), Branch . withUntyped . alt)
+> match c alt = Match (constrIndex (consRep c), withUntyped . alt)
 
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
@@ -126,10 +126,7 @@ Failure is just a type version of `mzero`.
 >       | p cs      -> delayed p (\cs -> caseOf_ (Typed (res cs)) bs def cs)
 >       | otherwise -> caseOf_ (Typed (res cs)) bs def cs
 >     Cons _ idx args ->
->       maybe def (\b -> branch (b cs) args) (lookup idx (map unMatch bs))
->
-> branch :: Branch cs m a -> [Untyped cs m] -> Nondet cs m a
-> branch (Branch alt) = alt
+>       maybe def (\b -> b cs args) (lookup idx (map unMatch bs))
 
 We provide operations `caseOf_` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped

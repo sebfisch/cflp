@@ -79,7 +79,8 @@ they are evaluated only once if they are shared.
 >   | Update (forall m' . MonadPlus m' => s -> m' s)
 >            (UpdateT s m a)
 
-The type `m'` of the updating monadic action is polymorphic.
+The updating monadic action must be polymorphic in the used monad
+`m'`.
 
 > instance MonadPlus m => MonadUpdate s (UpdateT s m)
 >  where
