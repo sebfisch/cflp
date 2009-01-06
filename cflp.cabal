@@ -1,6 +1,6 @@
 Name:          cflp
-Version:       0.2.5
-Cabal-Version: >= 1.2
+Version:       2009.1.6
+Cabal-Version: >= 1.6
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
                functional-logic programming ((C)FLP) in Haskell. The 
@@ -23,7 +23,7 @@ Extra-Source-Files: README, INSTALL, Makefile, configure, Test.lhs
 Library
   Build-Depends:    base >= 4, 
                     containers, 
-                    value-supply >= 0.3, 
+                    value-supply, 
                     mtl, 
                     syb, 
                     HUnit

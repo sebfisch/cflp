@@ -48,7 +48,7 @@ order to constrain shared choices.
 >   type M ID (ID -> a) = M ID a
 >   type T ID (ID -> a) = T ID a
 >
->   with f (ID us) = with (f (ID (supplyLeft us))) (ID (supplyRight us))
+>   with f (ID us) = with (f (ID l)) (ID r) where (l,r) = split2 us
 >
 > withUnique :: With ID a => a -> ID -> Nondet (C ID a) (M ID a) (T ID a)
 > withUnique = with
