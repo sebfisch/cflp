@@ -110,7 +110,7 @@ through the monadic computation.
 >     run x = lift (lift (unUpdateT x)) >>= doUpdate
 >
 >     doUpdate (Return a)     = return a
->     doUpdate (Update upd y) = do lift (update upd); update upd; run y
+>     doUpdate (Update upd y) = do update upd; lift (update upd); run y
 
 We define another instance of `Update` where results are not returned
 in the base monad but in the transformed base monad. This instance is
