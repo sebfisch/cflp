@@ -80,8 +80,8 @@ constraint functional-logic computation according to a given strategy.
 > eval, evalPartial :: (CFLP CS m, Update CS m m', Data a)
 >                   => Strategy m' -> (CS -> ID -> Nondet CS m a)
 >                   -> IO [a]
-> eval        s = liftM (map prim) . evaluate groundNormalForm  s
-> evalPartial s = liftM (map prim) . evaluate partialNormalForm s
+> eval        s = liftM (map primData) . evaluate groundNormalForm  s
+> evalPartial s = liftM (map primData) . evaluate partialNormalForm s
 >
 > evalPrint :: (CFLP CS m, Update CS m m', Data a, Show a)
 >           => Strategy m' -> (CS -> ID -> Nondet CS m a)
@@ -102,8 +102,8 @@ constraint functional-logic computation according to a given strategy.
 
 We provide
 
-  * an `eval` operation to compute Haskell terms from non-determinitic
-    data,
+  * an `eval` operation to compute Haskell terms from
+    non-deterministic data,
 
   * an operation `evalPartial` to compute partial Haskell terms where
     logic variables are replaced with an error, and
