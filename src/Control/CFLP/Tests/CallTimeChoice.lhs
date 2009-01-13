@@ -12,17 +12,15 @@ results have to be as if they were executed eagerly.
 > import Control.CFLP.Tests
 > import Test.HUnit
 >
-> import Control.CFLP
->
 > import Prelude hiding ( not, null, head )
 >
 > tests :: Test
 > tests = "call-time choice" ~: test
->  [ "ignore first, narrow second" ~: ignoreFirstNarrowSecond
->  , "shared vars are equal" ~: sharedVarsAreEqual
->  , "no demand on shared var" ~: noDemandOnSharedVar
->  , "shared compound terms" ~: sharedCompoundTerms
->  ]
+>   [ "ignore first, narrow second" ~: ignoreFirstNarrowSecond
+>   , "shared vars are equal" ~: sharedVarsAreEqual
+>   , "no demand on shared var" ~: noDemandOnSharedVar
+>   , "shared compound terms" ~: sharedCompoundTerms
+>   ]
 
 Every module under `Control.CFLP.Tests` defines a constant `tests`
 that collects all defined tests.
@@ -33,7 +31,7 @@ that collects all defined tests.
 >   comp cs u = ignot (error "illegal demand") (unknown u) cs
 >
 > ignot :: CFLP cs m
->       => Nondet cs m a -> Nondet cs m Bool -> cs -> Nondet cs m Bool
+>       => Nondet cs m a -> Nondet cs m Bool -> Context cs -> Nondet cs m Bool
 > ignot _ = not
 
 This test checks a function with two arguments, where the first must
@@ -73,7 +71,8 @@ something that is shared.
 >  where
 >   comp cs u = negHeads (unknown u) cs
 >
-> negHeads :: CFLP cs m => Nondet cs m [Bool] -> cs -> Nondet cs m [Bool]
+> negHeads :: CFLP cs m
+>          => Nondet cs m [Bool] -> Context cs -> Nondet cs m [Bool]
 > negHeads l cs = not (head l cs) cs ^: head l cs ^: nil
 
 This test checks whether sharing is ensured on aruments of compound

@@ -6,7 +6,7 @@ non-deterministic programming.
 
 > module Data.LazyNondet (
 >
->   NormalForm, Nondet,
+>   NormalForm, Nondet, Context(..),
 >
 >   ID, initID, withUnique,
 >
@@ -16,9 +16,11 @@ non-deterministic programming.
 >
 >   withHNF, caseOf, caseOf_, Match,
 >
->   Data, nondetData, primData, groundNormalForm, partialNormalForm,
+>   Data, nondet, prim, groundNormalForm, partialNormalForm,
 >
 >   ConsRep(..), cons, match,
+>
+>   apply, fun
 >
 > ) where
 >
@@ -28,3 +30,4 @@ non-deterministic programming.
 > import Data.LazyNondet.Matching
 > import Data.LazyNondet.Narrowing
 > import Data.LazyNondet.Primitive
+> import Data.LazyNondet.HigherOrder

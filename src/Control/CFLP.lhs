@@ -46,10 +46,10 @@ store that we intend to use.
 
 > type CS = ChoiceStoreIM
 >
-> noConstraints :: CS
-> noConstraints = noChoices
+> noConstraints :: Context CS
+> noConstraints = Context noChoices
 >
-> type Computation m a = CS -> ID -> Nondet CS (UpdateT CS m) a
+> type Computation m a = Context CS -> ID -> Nondet CS (UpdateT CS m) a
 
 Currently, the constraint store used to evaluate constraint
 functional-logic programs is simply a `ChoiceStore`. It will be a
@@ -67,8 +67,8 @@ list.
 The strategy of the list monad is depth-first search.
 
 > evaluate :: (CFLP CS m, Update CS m m')
->          => (Nondet CS m a -> CS -> m' b)
->          -> Strategy m' -> (CS -> ID -> Nondet CS m a)
+>          => (Nondet CS m a -> Context CS -> m' b)
+>          -> Strategy m' -> (Context CS -> ID -> Nondet CS m a)
 >          -> IO [b]
 > evaluate evalNondet enumerate op = do
 >   i <- initID
@@ -78,13 +78,13 @@ The `evaluate` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
 > eval, evalPartial :: (CFLP CS m, Update CS m m', Data a)
->                   => Strategy m' -> (CS -> ID -> Nondet CS m a)
+>                   => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
 >                   -> IO [a]
-> eval        s = liftM (map primData) . evaluate groundNormalForm  s
-> evalPartial s = liftM (map primData) . evaluate partialNormalForm s
+> eval        s = liftM (map prim) . evaluate groundNormalForm  s
+> evalPartial s = liftM (map prim) . evaluate partialNormalForm s
 >
 > evalPrint :: (CFLP CS m, Update CS m m', Data a, Show a)
->           => Strategy m' -> (CS -> ID -> Nondet CS m a)
+>           => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
 >           -> IO ()
 > evalPrint s op = evaluate partialNormalForm s op >>= printSols
 >

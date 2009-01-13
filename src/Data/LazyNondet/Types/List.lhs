@@ -24,14 +24,14 @@ This module provides non-deterministic lists.
 > nil :: Monad m => Nondet cs m [a]
 > nil = cons ([] :: [()])
 >
-> pNil :: (cs -> Nondet cs m b) -> Match [a] cs m b
+> pNil :: (Context cs -> Nondet cs m b) -> Match [a] cs m b
 > pNil = match ([] :: [()])
 >
 > infixr 5 ^:
 > (^:) :: Monad m => Nondet cs m a -> Nondet cs m [a] -> Nondet cs m [a]
 > (^:) = cons ((:) :: () -> [()] -> [()])
 >
-> pCons :: (cs -> Nondet cs m a -> Nondet cs m [a] -> Nondet cs m b)
+> pCons :: (Context cs -> Nondet cs m a -> Nondet cs m [a] -> Nondet cs m b)
 >       -> Match [a] cs m b
 > pCons = match ((:) :: () -> [()] -> [()])
 >
@@ -48,12 +48,12 @@ for the element type.
 
 Some operations on lists:
 
-> null :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m Bool
+> null :: Update cs m m => Nondet cs m [a] -> Context cs -> Nondet cs m Bool
 > null xs = caseOf_ xs [pNil (const true)] false
 >
-> head :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m a
+> head :: Update cs m m => Nondet cs m [a] -> Context cs -> Nondet cs m a
 > head l = caseOf l [pCons (\_ x _ -> x)]
 >
-> tail :: Update cs m m => Nondet cs m [a] -> cs -> Nondet cs m [a]
+> tail :: Update cs m m => Nondet cs m [a] -> Context cs -> Nondet cs m [a]
 > tail l = caseOf l [pCons (\_ _ xs -> xs)]
 

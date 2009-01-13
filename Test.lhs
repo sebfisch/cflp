@@ -7,9 +7,10 @@ package.
 
 > import Test.HUnit
 > import Control.CFLP.Tests.CallTimeChoice as CTC
+> import Control.CFLP.Tests.HigherOrder as HO
 >
 > main :: IO ()
 > main = do
->  runTestTT $ test [CTC.tests]
+>  runTestTT $ test [CTC.tests,HO.tests]
 >  return ()
 

@@ -24,15 +24,15 @@
 > unknown :: (MonadUpdate cs m, Narrow cs a) => ID -> Nondet cs m a
 > unknown u = freeVar u (delayed (redelay u) (\cs -> narrow cs u))
 >
-> redelay :: ChoiceStore cs => ID -> cs -> Bool
-> redelay (ID us) = isNothing . lookupChoice (supplyValue us)
+> redelay :: ChoiceStore cs => ID -> Context cs -> Bool
+> redelay (ID us) (Context cs) = isNothing . lookupChoice (supplyValue us) $ cs
 
 The application of `unknown` to a constraint store and a unique
 identifier represents a logic variable of an arbitrary type. 
 
 > class ChoiceStore cs => Narrow cs a
 >  where
->   narrow :: MonadUpdate cs m => cs -> ID -> Nondet cs m a
+>   narrow :: MonadUpdate cs m => Context cs -> ID -> Nondet cs m a
 
 Logic variables of type `a` can be narrowed to head-normal form if
 there is an instance of the type class `Narrow`. A constraint store
@@ -52,8 +52,9 @@ current constraint store, the arguments of `(?)` are shared among all
 executions and *not* reexecuted.
 
 > oneOf :: (MonadUpdate cs m, ChoiceStore cs)
->       => [Nondet cs m a] -> cs -> ID -> Nondet cs m a
-> oneOf xs cs (ID us) = Typed (choice cs (supplyValue us) (map untyped xs))
+>       => [Nondet cs m a] -> Context cs -> ID -> Nondet cs m a
+> oneOf xs (Context cs) (ID us)
+>   = Typed (choice cs (supplyValue us) (map untyped xs))
 
 The operation `oneOf` takes a list of non-deterministic values and
 returns a non-deterministic value that yields one of the elements in

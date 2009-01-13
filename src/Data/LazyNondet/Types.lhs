@@ -11,7 +11,9 @@ non-deterministic data.
 >
 > module Data.LazyNondet.Types (
 >
->   ID(..), NormalForm(..), HeadNormalForm(..), Untyped, Nondet(..),
+>   Context(..), ID(..), 
+>
+>   NormalForm(..), HeadNormalForm(..), Untyped, Nondet(..),
 >
 >   mkHNF, freeVar, delayed
 >
@@ -22,6 +24,8 @@ non-deterministic data.
 > import Control.Monad.Update
 >
 > import Data.Supply
+>
+> newtype Context cs = Context cs
 >
 > newtype ID = ID (Supply Int)
 >
@@ -36,7 +40,8 @@ types and the `NormalForm` type.
 > data HeadNormalForm cs m
 >   = Cons DataType ConIndex [Untyped cs m]
 >   | FreeVar ID (Untyped cs m)
->   | Delayed (cs -> Bool) (cs -> Untyped cs m)
+>   | Delayed (Context cs -> Bool) (Context cs -> Untyped cs m)
+>   | Lambda (Untyped cs m -> Context cs -> ID -> Untyped cs m)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
@@ -69,7 +74,8 @@ that creates the variable.
 The function `freeVar` is used to put a name around a narrowed free
 variable.
 
-> delayed :: Monad m => (cs -> Bool) -> (cs -> Nondet cs m a) -> Nondet cs m a
+> delayed :: Monad m => (Context cs -> Bool) -> (Context cs -> Nondet cs m a)
+>         -> Nondet cs m a
 > delayed p resume = Typed . return . Delayed p $ (untyped . resume)
 
 With `delayed` computations can be delayed to be reexecuted with the

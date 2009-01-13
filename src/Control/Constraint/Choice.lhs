@@ -46,7 +46,7 @@ applications.
 >  where
 >   lookupChoice u (ChoiceStoreIM cs) = IM.lookup u cs
 >
->   assertChoice _ u x (ChoiceStoreIM cs) = do
+>   assertChoice _ u x (ChoiceStoreIM cs) =
 >     maybe (return (ChoiceStoreIM (IM.insert u x cs)))
 >           (\y -> do guard (x==y); return (ChoiceStoreIM cs))
 >           (IM.lookup u cs)

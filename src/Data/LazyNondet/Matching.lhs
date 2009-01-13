@@ -24,13 +24,13 @@
 > import Control.Monad.State
 > import Control.Monad.Update
 >
-> withHNF :: (Monad m, Update cs m m)
+> withHNF :: Update cs m m
 >         => Nondet cs m a
->         -> (HeadNormalForm cs m -> cs -> Nondet cs m b)
->         -> cs -> Nondet cs m b
-> withHNF x b cs = Typed (do
+>         -> (HeadNormalForm cs m -> Context cs -> Nondet cs m b)
+>         -> Context cs -> Nondet cs m b
+> withHNF x b (Context cs) = Typed (do
 >   (hnf,cs') <- runStateT (updateState (untyped x)) cs
->   untyped (b hnf cs'))
+>   untyped (b hnf (Context cs')))
 
 The `withHNF` operation can be used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
@@ -96,11 +96,13 @@ application of `withUntyped` to this function consumes n elements of
 the list of untyped values and yields the result of applying the given
 function to typed versions of these values.
 
-> newtype Match a cs m b = Match { unMatch :: (ConIndex, cs -> Branch cs m b) }
+> newtype Match a cs m b
+>   = Match { unMatch :: (ConIndex, Context cs -> Branch cs m b) }
+>
 > type Branch cs m a = [Untyped cs m] -> Nondet cs m a
 >
 > match :: (ConsRep a, WithUntyped b)
->       => a -> (C b -> b) -> Match t (C b) (M b) (T b)
+>       => a -> (Context (C b) -> b) -> Match t (C b) (M b) (T b)
 > match c alt = Match (constrIndex (consRep c), withUntyped . alt)
 
 The operation `match` is used to build destructor functions for
@@ -112,12 +114,12 @@ non-deterministic values that can be used with `caseOf`.
 Failure is just a type version of `mzero`.
 
 > caseOf :: Update cs m m
->        => Nondet cs m a -> [Match a cs m b] -> cs -> Nondet cs m b
+>        => Nondet cs m a -> [Match a cs m b] -> Context cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
 >
 > caseOf_ :: Update cs m m
 >         => Nondet cs m a -> [Match a cs m b] -> Nondet cs m b
->         -> cs -> Nondet cs m b
+>         -> Context cs -> Nondet cs m b
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
@@ -127,6 +129,7 @@ Failure is just a type version of `mzero`.
 >       | otherwise -> caseOf_ (Typed (res cs)) bs def cs
 >     Cons _ idx args ->
 >       maybe def (\b -> b cs args) (lookup idx (map unMatch bs))
+>     Lambda _ -> error "Data.LazyNondet.Matching.caseOf: cannot match lambda"
 
 We provide operations `caseOf_` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped

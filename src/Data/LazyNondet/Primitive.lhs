@@ -7,7 +7,7 @@
 >
 > module Data.LazyNondet.Primitive (
 >
->   nondetData, primData, groundNormalForm, partialNormalForm,
+>   nondet, prim, groundNormalForm, partialNormalForm,
 >
 >   prim_eq
 >
@@ -24,12 +24,12 @@
 >
 > import Data.Supply
 >
-> primData :: Data a => NormalForm -> a
-> primData (Var u) = error $ "demand on logic variable " ++ show u
-> primData (NormalForm con args) =
+> prim :: Data a => NormalForm -> a
+> prim (Var u) = error $ "demand on logic variable " ++ show u
+> prim (NormalForm con args) =
 >   snd (gmapAccumT perkid args (fromConstr con))
 >  where
->   perkid ts _ = (tail ts, primData (head ts))
+>   perkid ts _ = (tail ts, prim (head ts))
 
 The operation `prim` translates a normal form into a primitive Haskell
 value. Free logic variables are translated into a call to `error` so
@@ -40,21 +40,22 @@ variables.
 > generic x = NormalForm (toConstr x) (gmapQ generic x)
 >
 > nf2hnf :: Monad m => NormalForm -> Untyped cs m
-> nf2hnf (Var _) = error $ "Primitive.nf2hnf: cannot convert logic variable"
+> nf2hnf (Var _) = error "Primitive.nf2hnf: cannot convert logic variable"
 > nf2hnf (NormalForm con args) = return (mkHNF con (map nf2hnf args))
 >
-> nondetData :: (Monad m, Data a) => a -> Nondet cs m a
-> nondetData = Typed . nf2hnf . generic
+> nondet :: (Monad m, Data a) => a -> Nondet cs m a
+> nondet = Typed . nf2hnf . generic
 
 We also provide a generic operation `nondet` to translate instances of
 the `Data` class into non-deterministic data.
 
-> groundNormalForm :: Update cs m m' => Nondet cs m a -> cs -> m' NormalForm
-> groundNormalForm = evalStateT . gnf . untyped
+> groundNormalForm :: Update cs m m'
+>                  => Nondet cs m a -> Context cs -> m' NormalForm
+> groundNormalForm x (Context cs) = evalStateT (gnf (untyped x)) cs
 >
 > partialNormalForm :: (Update cs m m', ChoiceStore cs)
->                   => Nondet cs m a -> cs -> m' NormalForm
-> partialNormalForm = evalStateT . pnf . untyped
+>                   => Nondet cs m a -> Context cs -> m' NormalForm
+> partialNormalForm x (Context cs) = evalStateT (pnf (untyped x)) cs
 
 The `...NormalForm` functions evaluate a non-deterministic value and
 lift all non-deterministic choices to the top level. The results are
@@ -92,7 +93,7 @@ first time.
 >     FreeVar u@(ID us) y ->
 >       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
 >             . lkp (supplyValue us)
->     Delayed _ resume -> get >>= nf lkp cns fv . resume
+>     Delayed _ resume -> get >>= nf lkp cns fv . resume . Context
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)
@@ -123,7 +124,7 @@ data that is used to define a typed equality test in the
 >   hnf <- updateState x
 >   case hnf of
 >     FreeVar _ y -> solveCons y
->     Delayed _ res -> get >>= solveCons . res
+>     Delayed _ res -> get >>= solveCons . res . Context
 >     _ -> return hnf
 
 The function `solveCons` is like `solve` but always yields a
