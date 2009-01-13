@@ -19,6 +19,9 @@ This module provides non-deterministic lists.
 >
 > import Control.Constraint.Choice
 >
+> import Prelude hiding ( map, foldr )
+> import qualified Prelude as P
+>
 > instance ConsRep [()] where consRep = toConstr
 >
 > nil :: Monad m => Nondet cs m [a]
@@ -36,7 +39,7 @@ This module provides non-deterministic lists.
 > pCons = match ((:) :: () -> [()] -> [()])
 >
 > fromList :: Monad m => [Nondet cs m a] -> Nondet cs m [a]
-> fromList = foldr (^:) nil
+> fromList = P.foldr (^:) nil
 
 We can use logic variables of a list type if there are logic variables
 for the element type.
@@ -56,4 +59,21 @@ Some operations on lists:
 >
 > tail :: Update cs m m => Nondet cs m [a] -> Context cs -> Nondet cs m [a]
 > tail l = caseOf l [pCons (\_ _ xs -> xs)]
+
+Higher-order functions:
+
+> map :: Update cs m m
+>     => Nondet cs m (a -> b) -> Nondet cs m [a]
+>     -> Context cs -> ID -> Nondet cs m [b]
+> map f l cs = withUnique $ \u ->
+>               foldr (fun (\x xs -> apply f x cs u ^: xs)) nil l cs
+>
+> foldr :: Update cs m m
+>       => Nondet cs m (a -> b -> b) -> Nondet cs m b -> Nondet cs m [a]
+>       -> Context cs -> ID -> Nondet cs m b
+> foldr f y l cs = withUnique $ \u1 u2 u3 ->
+>   caseOf l
+>     [ pNil (const y)
+>     , pCons (\cs x xs -> apply (apply f x cs u1) (foldr f y xs cs u2) cs u3)
+>     ] cs
 

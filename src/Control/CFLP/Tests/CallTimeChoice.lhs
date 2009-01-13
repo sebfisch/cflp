@@ -13,6 +13,8 @@ results have to be as if they were executed eagerly.
 > import Test.HUnit
 >
 > import Prelude hiding ( not, null, head )
+> import Data.LazyNondet.Types.Bool
+> import Data.LazyNondet.Types.List
 >
 > tests :: Test
 > tests = "call-time choice" ~: test

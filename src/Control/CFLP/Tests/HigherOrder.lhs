@@ -10,7 +10,9 @@ functional-logic programs.
 > import Control.CFLP.Tests
 > import Test.HUnit
 >
-> import Prelude hiding ( not, null, head )
+> import Prelude hiding ( not, null, head, map, foldr )
+> import Data.LazyNondet.Types.Bool
+> import Data.LazyNondet.Types.List
 >
 > tests :: Test
 > tests = "higher order" ~: test
@@ -18,6 +20,8 @@ functional-logic programs.
 >   , "apply binary constructor" ~: applyBinCons
 >   , "apply non-deterministic choice" ~: applyChoice
 >   , "call-time choice" ~: callTimeChoice
+>   , "map shared unknowns" ~: mapSharedUnknowns
+>   , "memeber with fold" ~: memberWithFold
 >   ]
 
 The following test simply applies the not function.
@@ -54,5 +58,21 @@ when applying the choice combinator using higher-order features.
 >               apply (fun two)
 >                     (apply (apply (fun (?)) false cs u1) true cs u2) cs u3
 >
->   two x = x ^: x ^: nil
+> two :: Monad m => Nondet cs m a -> Nondet cs m [a]
+> two x = x ^: x ^: nil
+
+The following test maps the function `not` over a list with a
+duplicated free variable.
+
+> mapSharedUnknowns :: Assertion
+> mapSharedUnknowns = assertResults comp [[True,True],[False,False]]
+>  where
+>   comp cs = withUnique $ \u -> map (fun not) (two (unknown u)) cs
+
+The following test checks the member operation defined using `foldr`.
+
+> memberWithFold :: Assertion
+> memberWithFold = assertResults comp [True,False]
+>  where
+>   comp = foldr (fun (?)) failure (true ^: false ^: nil)
 
