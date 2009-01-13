@@ -97,6 +97,7 @@ first time.
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)
+>     Lambda _ -> error "Data.LazyNondet.Primitive.nf: cannot convert lambda"
 
 The `nf` function is used by all normal-form functions and performs
 all the work.

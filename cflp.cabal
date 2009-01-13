@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       2009.1.6
+Version:       2009.1.13
 Cabal-Version: >= 1.6
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -38,8 +38,10 @@ Library
                     Data.LazyNondet.Matching,
                     Data.LazyNondet.Narrowing,
                     Data.LazyNondet.Primitive,
+                    Data.LazyNondet.HigherOrder,
                     Control.CFLP.Tests,
                     Control.CFLP.Tests.CallTimeChoice
+                    Control.CFLP.Tests.HigherOrder
   Hs-Source-Dirs:   src
   Extensions:       FunctionalDependencies,
                     MultiParamTypeClasses,

@@ -94,6 +94,7 @@ should be delayed again.
 >  where
 >   show (FreeVar (ID u) _) = '_':show (supplyValue u)
 >   show (Delayed _ _) = "<delayed>"
+>   show (Lambda _) = "<function>"
 >   show (Cons typ idx args) 
 >     | null args = show con
 >     | otherwise = unwords (('(':show con):map show args++[")"])
@@ -110,7 +111,8 @@ should be delayed again.
 > instance Show (HeadNormalForm cs (UpdateT cs []))
 >  where
 >   show (FreeVar (ID u) _)  = '_':show (supplyValue u)
->   show (Delayed _ _)         = "<delayed>"
+>   show (Delayed _ _)       = "<delayed>"
+>   show (Lambda _)          = "<function>"
 >   show (Cons typ idx [])   = show (indexConstr typ idx)
 >   show (Cons typ idx args) =
 >     "("++show (indexConstr typ idx)++" "++unwords (map show args)++")" 
