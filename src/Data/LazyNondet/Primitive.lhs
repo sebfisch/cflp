@@ -26,6 +26,7 @@
 >
 > prim :: Data a => NormalForm -> a
 > prim (Var u) = error $ "demand on logic variable " ++ show u
+> prim (Fun _) = error "conversion of functions not yet implemented."
 > prim (NormalForm con args) =
 >   snd (gmapAccumT perkid args (fromConstr con))
 >  where
@@ -41,6 +42,7 @@ variables.
 >
 > nf2hnf :: Monad m => NormalForm -> Untyped cs m
 > nf2hnf (Var _) = error "Primitive.nf2hnf: cannot convert logic variable"
+> nf2hnf (Fun _) = error "conversion of function not yet implemented"
 > nf2hnf (NormalForm con args) = return (mkHNF con (map nf2hnf args))
 >
 > nondet :: (Monad m, Data a) => a -> Nondet cs m a
