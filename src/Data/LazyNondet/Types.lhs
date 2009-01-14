@@ -29,7 +29,10 @@ non-deterministic data.
 >
 > newtype ID = ID (Supply Int)
 >
-> data NormalForm = NormalForm Constr [NormalForm] | Var Int
+> data NormalForm
+>   = NormalForm Constr [NormalForm]
+>   | Var Int
+>   | Fun (NormalForm -> NormalForm)
 
 The normal form of data is represented by the type `NormalForm` which
 defines a tree of constructors and logic variables. The type `Constr`
@@ -123,6 +126,7 @@ forms and non-deterministic values.
 > instance Show NormalForm
 >  where
 >   showsPrec _ (Var u) = ('_':) . shows u
+>   showsPrec _ (Fun _) = shows "<function>"
 >   showsPrec _ (NormalForm cons []) = shows cons
 >   showsPrec n x@(NormalForm cons args)
 >     | Just xs <- fromList x = shows xs

@@ -97,7 +97,7 @@ first time.
 >     Cons typ idx args -> do
 >       nfs <- mapM (nf lkp cns fv) args
 >       return (cns (indexConstr typ idx) nfs)
->     Lambda _ -> error "Data.LazyNondet.Primitive.nf: cannot convert lambda"
+>     Lambda _ -> Fun $ error "Data.LazyNondet.Primitive.nf: function"
 
 The `nf` function is used by all normal-form functions and performs
 all the work.
@@ -126,6 +126,7 @@ data that is used to define a typed equality test in the
 >   case hnf of
 >     FreeVar _ y -> solveCons y
 >     Delayed _ res -> get >>= solveCons . res . Context
+>     Lambda _ -> error "Data.LazyNondet.Primitive.solveCons: matched lambda"
 >     _ -> return hnf
 
 The function `solveCons` is like `solve` but always yields a
