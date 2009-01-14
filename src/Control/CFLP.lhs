@@ -25,6 +25,7 @@ functional-logic programming in Haskell.
 >
 > import Control.Monad.State
 > import Control.Monad.Update
+> import Control.Monad.Trans.Update
 >
 > import Control.Constraint.Choice
 >

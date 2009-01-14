@@ -21,7 +21,7 @@ non-deterministic data.
 >
 > import Data.Data
 >
-> import Control.Monad.Update
+> import Control.Monad.Trans.Update
 >
 > import Data.Supply
 >
