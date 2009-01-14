@@ -64,15 +64,16 @@ representation. Partial normal forms may contain unbound logic
 variables while ground normal forms are data terms.
 
 > gnf :: Update cs m m' => Untyped cs m -> StateT cs m' NormalForm
-> gnf = nf (\_ _ -> Just ()) NormalForm mkVar
+> gnf = nf (\_ _ -> Just ()) NormalForm mkVar Fun
 >
 > mkVar :: ID -> a -> NormalForm
 > mkVar (ID us) _ = Var (supplyValue us)
 >
 > pnf :: (Update cs m m', ChoiceStore cs)
 >     => Untyped cs m -> StateT cs m' NormalForm
-> pnf x = nf lookupChoice ((return.).mkHNF) ((return.).FreeVar) x
->     >>= nf lookupChoice NormalForm mkVar
+> pnf x
+>    = nf lookupChoice ((return.).mkHNF) ((return.).FreeVar) (return.Lambda) x
+>  >>= nf lookupChoice NormalForm mkVar Fun
 
 To compute ground normal forms, we ignore free variables and narrow
 them to ground terms. To compute partial normal forms, we do not
@@ -86,18 +87,19 @@ first time.
 >    => (Int -> cs -> Maybe a)
 >    -> (Constr -> [nf] -> nf)
 >    -> (ID -> Untyped cs m -> nf)
+>    -> (b -> nf)
 >    -> Untyped cs m -> StateT cs m' nf
-> nf lkp cns fv x = do
+> nf lkp cns fv fun x = do
 >   hnf <- updateState x
 >   case hnf of
 >     FreeVar u@(ID us) y ->
->       get >>= maybe (return (fv u y)) (const (nf lkp cns fv y))
+>       get >>= maybe (return (fv u y)) (const (nf lkp cns fv fun y))
 >             . lkp (supplyValue us)
->     Delayed _ resume -> get >>= nf lkp cns fv . resume . Context
+>     Delayed _ resume -> get >>= nf lkp cns fv fun . resume . Context
 >     Cons typ idx args -> do
->       nfs <- mapM (nf lkp cns fv) args
+>       nfs <- mapM (nf lkp cns fv fun) args
 >       return (cns (indexConstr typ idx) nfs)
->     Lambda _ -> Fun $ error "Data.LazyNondet.Primitive.nf: function"
+>     Lambda _ -> return . fun $ error "Data.LazyNondet.Primitive.nf: function"
 
 The `nf` function is used by all normal-form functions and performs
 all the work.
