@@ -6,7 +6,6 @@ This module defines combinators for higher-order CFLP.
 > {-# LANGUAGE 
 >       MultiParamTypeClasses,
 >       FunctionalDependencies,
->       TypeSynonymInstances,
 >       UndecidableInstances,
 >       FlexibleInstances,
 >       FlexibleContexts
