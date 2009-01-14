@@ -14,7 +14,6 @@ computations and shared monadic computations are evaluated only once.
 >
 > module Control.Monad.Trans.Update ( UpdateT ) where
 >
-> import Control.Monad
 > import Control.Monad.State
 > import Control.Monad.Trans
 > import Control.Monad.Update

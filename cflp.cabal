@@ -45,7 +45,6 @@ Library
   Hs-Source-Dirs:   src
   Extensions:       FunctionalDependencies,
                     MultiParamTypeClasses,
-                    UndecidableInstances,
                     FlexibleInstances,
                     FlexibleContexts,
                     PatternGuards,

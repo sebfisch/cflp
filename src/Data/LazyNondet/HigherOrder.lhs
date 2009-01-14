@@ -4,9 +4,7 @@
 This module defines combinators for higher-order CFLP.
 
 > {-# LANGUAGE 
->       MultiParamTypeClasses,
->       FunctionalDependencies,
->       UndecidableInstances,
+>       TypeFamilies,
 >       FlexibleInstances,
 >       FlexibleContexts
 >   #-}
@@ -45,7 +43,7 @@ The overloaded operation `fun` converts a function on
 non-deterministic data (of arbitrary arity) into a (possibly nested)
 lambda.
 
-> fun :: (Monad m, LiftFun f g, NestLambda g cs m t)
+> fun :: (Monad m, LiftFun f, NestLambda g, g ~ Lift f, m~M g, cs~C g, t~T g)
 >     => f -> Nondet cs m t
 > fun = nestLambda . liftFun
 
@@ -54,21 +52,33 @@ Here are private type classes that are used to implement `fun`.
 > newtype Lifted cs m a b
 >   = Lifted { lifted :: Nondet cs m a -> Context cs -> ID -> Nondet cs m b }
 
-> class NestLambda a cs m b | a -> cs, a -> m, a -> b
+> class NestLambda a
 >  where
->   nestLambda :: Monad m => a -> Nondet cs m b
+>   type C a :: *
+>   type M a :: * -> *
+>   type T a :: *
+>
+>   nestLambda :: Monad (M a) => a -> Nondet (C a) (M a) (T a)
 
 Single-argument functions can be lifted using `lambda`.
 
-> instance NestLambda (Lifted cs m a b) cs m (a -> b)
+> instance NestLambda (Lifted cs m a b)
 >  where
+>   type C (Lifted cs m a b) = cs
+>   type M (Lifted cs m a b) = m
+>   type T (Lifted cs m a b) = a -> b
+>
 >   nestLambda = lambda . lifted
 
 If we have a function on non-deterministic data we can lift it to the
 `Nondet` type with the following instance.
 
-> instance NestLambda f cs m b => NestLambda (Nondet cs m a -> f) cs m (a -> b)
+> instance (NestLambda f, C f ~ cs, M f ~ m) => NestLambda (Nondet cs m a -> f)
 >  where
+>   type C (Nondet cs m a -> f) = cs
+>   type M (Nondet cs m a -> f) = m
+>   type T (Nondet cs m a -> f) = a -> T f
+>
 >   nestLambda f = lambda (\x _ _ -> nestLambda (f x))
 
 We provide a combinator `liftFun` for 
@@ -80,29 +90,41 @@ We provide a combinator `liftFun` for
 
   * non-deterministic functions that only take a unique id.
 
-> class LiftFun f g | f -> g
+> class LiftFun f
 >  where
->   liftFun :: f -> g
+>   type Lift f
 >
-> instance LiftFun (Nondet cs m a -> Nondet cs m b) (Lifted cs m a b)
+>   liftFun :: f -> Lift f
+>
+> instance LiftFun (Nondet cs m a -> Nondet cs m b)
 >  where
+>   type Lift (Nondet cs m a -> Nondet cs m b) = Lifted cs m a b
+>
 >   liftFun f = Lifted (\x _ _ -> f x)
 >
 > instance LiftFun (Nondet cs m a -> Context cs -> Nondet cs m b)
->                  (Lifted cs m a b)
 >  where
+>   type Lift (Nondet cs m a -> Context cs -> Nondet cs m b) = Lifted cs m a b
+>
 >   liftFun f = Lifted (\x cs _ -> f x cs)
 >
-> instance LiftFun (Nondet cs m a -> ID -> Nondet cs m b) (Lifted cs m a b)
+> instance LiftFun (Nondet cs m a -> ID -> Nondet cs m b)
 >  where
+>   type Lift (Nondet cs m a -> ID -> Nondet cs m b) = Lifted cs m a b
+>
 >   liftFun f = Lifted (\x _ u -> f x u)
 >
 > instance LiftFun (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
->                  (Lifted cs m a b)
 >  where
+>   type Lift (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
+>           = Lifted cs m a b
+>
 >   liftFun = Lifted
 >
-> instance LiftFun (Nondet cs m b -> f) g => 
->          LiftFun (Nondet cs m a -> Nondet cs m b -> f) (Nondet cs m a -> g)
+> instance LiftFun (Nondet cs m b -> f)
+>       => LiftFun (Nondet cs m a -> Nondet cs m b -> f)
 >  where
+>   type Lift (Nondet cs m a -> Nondet cs m b -> f)
+>           = Nondet cs m a -> Lift (Nondet cs m b -> f)
+>
 >   liftFun f = liftFun . f
