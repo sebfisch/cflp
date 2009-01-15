@@ -10,7 +10,7 @@
 >
 > module Data.LazyNondet.Matching (
 >
->   Match, match, ConsPatList(..), constructors, patterns,
+>   Match, ConsPatList(..), constructors, patterns,
 >
 >   withHNF, failure, caseOf, caseOf_
 >
@@ -137,6 +137,14 @@ causes an additional slowdown because of the list lookup. It remains
 to be checked how big the slowdown of using `caseOf` is compared to
 using `withHNF` directly.
 
+
+Defining Constructor and Destructor Functions
+=============================================
+
+We provide combinators `constructors` and `destructors` that can be
+used to define functions for constructing and matching
+non-deterministic values.
+
 > class MkCons a
 >  where
 >   type Ctx a :: *
@@ -160,47 +168,47 @@ using `withHNF` directly.
 >   type Res (Nondet cs m a -> b) = Res b
 >
 >   mkCons l xs x = mkCons l (untyped x:xs)
-
+>
 > infixr 0 :!
 >
 > data ConsPatList a b = a :! b
-
+>
 > class ConsList a
 >  where
 >   type CData a
 >
 >   consList :: [ConsLabel] -> a
-
+>
 > instance ConsList ()
 >  where
 >   type CData () = ()
 >   consList _ = ()
-
+>
 > instance (MkCons a, ConsList b) => ConsList (ConsPatList a b)
 >  where
 >   type CData (ConsPatList a b) = Res a
 >
 >   consList (l:ls) = mkCons l [] :! consList ls
 >   consList _ = error "consList: insufficient cons labels"
-
+>
 > constructors :: (ConsList a, Generic (CData a)) => a
 > constructors = cs
 >  where cs = consList (consLabels (undefined `asCDataOf` cs))
 >
 > asCDataOf :: ConsList a => CData a -> a -> CData a
 > asCDataOf = const
-
+>
 > class PatternList a
 >  where
 >   type PData a
 >
 >   patternList :: [ConsLabel] -> a
-
+>
 > instance PatternList ()
 >  where
 >   type PData () = ()
 >   patternList _ = ()
-
+>
 > instance (WithUntyped a, PatternList p, cs ~ C a, m ~ M a, b ~ T a)
 >       => PatternList (ConsPatList ((Context cs -> a) -> Match t cs m b) p)
 >  where
@@ -208,7 +216,7 @@ using `withHNF` directly.
 >
 >   patternList (l:ls) = match (index l) :! patternList ls
 >   patternList _ = error "patternList: insufficient cons labels"
-
+>
 > patterns :: (PatternList a, Generic (PData a)) => a
 > patterns = cs
 >  where cs = patternList (consLabels (undefined `asPDataOf` cs))

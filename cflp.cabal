@@ -35,12 +35,12 @@ Library
                     Control.Constraint.Choice,
                     Data.LazyNondet,
                     Data.LazyNondet.Types,
+                    Data.LazyNondet.Generic,
                     Data.LazyNondet.UniqueID,
                     Data.LazyNondet.Matching,
                     Data.LazyNondet.Narrowing,
                     Data.LazyNondet.Primitive,
                     Data.LazyNondet.HigherOrder,
-                    Data.LazyNondet.Generic,
                     Control.CFLP.Tests,
                     Control.CFLP.Tests.CallTimeChoice
                     Control.CFLP.Tests.HigherOrder
