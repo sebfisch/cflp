@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       2009.1.15
+Version:       2009.1.15.2
 Cabal-Version: >= 1.6
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -27,13 +27,14 @@ Library
                     mtl, 
                     syb, 
                     HUnit
-  Exposed-Modules:  Control.CFLP
+  Exposed-Modules:  Control.CFLP,
+                    Data.LazyNondet.Types.Bool,
+                    Data.LazyNondet.Types.List
   Other-Modules:    Control.Monad.Update,
+                    Control.Monad.Trans.Update,
                     Control.Constraint.Choice,
                     Data.LazyNondet,
                     Data.LazyNondet.Types,
-                    Data.LazyNondet.Types.Bool,
-                    Data.LazyNondet.Types.List,
                     Data.LazyNondet.UniqueID,
                     Data.LazyNondet.Matching,
                     Data.LazyNondet.Narrowing,
