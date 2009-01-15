@@ -39,14 +39,16 @@ Library
                     Data.LazyNondet.Narrowing,
                     Data.LazyNondet.Primitive,
                     Data.LazyNondet.HigherOrder,
+                    Data.LazyNondet.Generic,
                     Control.CFLP.Tests,
                     Control.CFLP.Tests.CallTimeChoice
                     Control.CFLP.Tests.HigherOrder
   Hs-Source-Dirs:   src
-  Extensions:       FunctionalDependencies,
+  Extensions:       NoMonomorphismRestriction,
                     MultiParamTypeClasses,
                     FlexibleInstances,
                     FlexibleContexts,
+                    NoMonoPatBinds,
                     PatternGuards,
                     TypeFamilies,
                     RankNTypes

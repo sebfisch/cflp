@@ -74,13 +74,13 @@ The strategy of the list monad is depth-first search.
 The `evaluate` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
-> eval, evalPartial :: (CFLP CS m, Update CS m m', Data a)
+> eval, evalPartial :: (CFLP CS m, Update CS m m', Generic a)
 >                   => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
 >                   -> IO [a]
-> eval        s = liftM (map prim) . evaluate groundNormalForm  s
-> evalPartial s = liftM (map prim) . evaluate partialNormalForm s
+> eval        s = liftM (map primitive) . evaluate groundNormalForm  s
+> evalPartial s = liftM (map primitive) . evaluate partialNormalForm s
 >
-> evalPrint :: (CFLP CS m, Update CS m m', Data a, Show a)
+> evalPrint :: (CFLP CS m, Update CS m m', Generic a)
 >           => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
 >           -> IO ()
 > evalPrint s op = evaluate partialNormalForm s op >>= printSols

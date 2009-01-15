@@ -16,16 +16,20 @@ non-deterministic programming.
 >
 >   withHNF, caseOf, caseOf_, Match,
 >
->   Data, nondet, prim, groundNormalForm, partialNormalForm,
+>   Generic(..), primitive, generic, nondet,
 >
->   ConsRep(..), cons, match,
+>   Decons, ApplyCons(..), (!), cons,
+>
+>   groundNormalForm, partialNormalForm,
+>
+>   ConsPatList(..), constructors, patterns,
 >
 >   apply, fun
 >
 > ) where
 >
-> import Data.Data
 > import Data.LazyNondet.Types
+> import Data.LazyNondet.Generic
 > import Data.LazyNondet.UniqueID
 > import Data.LazyNondet.Matching
 > import Data.LazyNondet.Narrowing

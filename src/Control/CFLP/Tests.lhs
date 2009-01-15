@@ -11,15 +11,15 @@ This module defines auxiliary functions for the test suite.
 We use HUnit for testing because we need to test IO actions and want
 to use errors when testing laziness.
 
-> assertResults :: (Data a, Show a, Eq a)
+> assertResults :: (Generic a, Show a, Eq a)
 >               => (Computation [] a) -> [a] -> Assertion
 > assertResults = assertResultsLimit Nothing
 >
-> assertResultsN :: (Data a, Show a, Eq a)
+> assertResultsN :: (Generic a, Show a, Eq a)
 >                => Int -> (Computation [] a) -> [a] -> Assertion
 > assertResultsN = assertResultsLimit . Just
 >
-> assertResultsLimit :: (Data a, Show a, Eq a)
+> assertResultsLimit :: (Generic a, Show a, Eq a)
 >                    => Maybe Int -> (Computation [] a) -> [a] -> Assertion
 > assertResultsLimit limit op expected = do
 >   actual <- eval depthFirst op

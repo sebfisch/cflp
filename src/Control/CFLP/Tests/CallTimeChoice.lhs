@@ -47,7 +47,7 @@ check demand than with using `error`. So an *error* is considered a
 >  where
 >   comp _ = two . unknown
 >
-> two :: Monad m => Nondet cs m a -> Nondet cs m [a]
+> two :: (Monad m, Generic a) => Nondet cs m a -> Nondet cs m [a]
 > two x = x ^: x ^: nil
 
 This test checks call-time choice semantics: variables represent

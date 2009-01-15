@@ -58,7 +58,7 @@ when applying the choice combinator using higher-order features.
 >               apply (fun two)
 >                     (apply (apply (fun (?)) false cs u1) true cs u2) cs u3
 >
-> two :: Monad m => Nondet cs m a -> Nondet cs m [a]
+> two :: (Monad m, Generic a) => Nondet cs m a -> Nondet cs m [a]
 > two x = x ^: x ^: nil
 
 The following test maps the function `not` over a list with a

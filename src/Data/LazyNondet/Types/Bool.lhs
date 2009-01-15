@@ -4,14 +4,15 @@
 This module provides non-deterministic booleans.
 
 > {-# LANGUAGE
+>       NoMonomorphismRestriction,
 >       MultiParamTypeClasses,
 >       FlexibleInstances,
->       FlexibleContexts
+>       FlexibleContexts,
+>       NoMonoPatBinds
 >   #-}
 >
 > module Data.LazyNondet.Types.Bool where
 >
-> import Data.Data
 > import Data.LazyNondet
 > import Data.LazyNondet.Types
 > import Data.LazyNondet.Primitive
@@ -20,20 +21,15 @@ This module provides non-deterministic booleans.
 > import Control.Monad.Update
 >
 > import Control.Constraint.Choice
+
+Instances for the classes `ApplyCons` and `Generic` for booleans are
+defined in the module `Data.LazyNondet.Generic`.
+
+> false, true :: Monad m => Nondet cs m Bool
+> false :! true :! () = constructors
 >
-> instance ConsRep Bool where consRep = toConstr
->
-> true :: Monad m => Nondet cs m Bool
-> true = cons True
->
-> pTrue :: (Context cs -> Nondet cs m a) -> Match Bool cs m a
-> pTrue = match True
->
-> false :: Monad m => Nondet cs m Bool
-> false = cons False
->
-> pFalse :: (Context cs -> Nondet cs m a) -> Match Bool cs m a
-> pFalse = match False
+> pFalse, pTrue :: (Context cs -> Nondet cs m a) -> Match Bool cs m a
+> pFalse :! pTrue :! () = patterns
 
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Narrow`.

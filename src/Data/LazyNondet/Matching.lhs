@@ -5,21 +5,19 @@
 >       RankNTypes,
 >       TypeFamilies,
 >       FlexibleContexts,
->       FlexibleInstances,
->       MultiParamTypeClasses,
->       FunctionalDependencies
+>       FlexibleInstances
 >   #-}
 >
 > module Data.LazyNondet.Matching (
 >
->   Match, match, ConsRep(..), cons,
+>   Match, match, ConsPatList(..), constructors, patterns,
 >
 >   withHNF, failure, caseOf, caseOf_
 >
 > ) where
 >
-> import Data.Data
 > import Data.LazyNondet.Types
+> import Data.LazyNondet.Generic
 >
 > import Control.Monad.State
 > import Control.Monad.Update
@@ -97,13 +95,13 @@ the list of untyped values and yields the result of applying the given
 function to typed versions of these values.
 
 > newtype Match a cs m b
->   = Match { unMatch :: (ConIndex, Context cs -> Branch cs m b) }
+>   = Match { unMatch :: (Int, Context cs -> Branch cs m b) }
 >
 > type Branch cs m a = [Untyped cs m] -> Nondet cs m a
 >
-> match :: (ConsRep a, WithUntyped b)
->       => a -> (Context (C b) -> b) -> Match t (C b) (M b) (T b)
-> match c alt = Match (constrIndex (consRep c), withUntyped . alt)
+> match :: WithUntyped a
+>       => Int -> (Context (C a) -> a) -> Match t (C a) (M a) (T a)
+> match n alt = Match (n, withUntyped . alt)
 
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
@@ -127,8 +125,8 @@ Failure is just a type version of `mzero`.
 >     Delayed p res
 >       | p cs      -> delayed p (\cs -> caseOf_ (Typed (res cs)) bs def cs)
 >       | otherwise -> caseOf_ (Typed (res cs)) bs def cs
->     Cons _ idx args ->
->       maybe def (\b -> b cs args) (lookup idx (map unMatch bs))
+>     Cons label args ->
+>       maybe def (\b -> b cs args) (lookup (index label) (map unMatch bs))
 >     Lambda _ -> error "Data.LazyNondet.Matching.caseOf: cannot match lambda"
 
 We provide operations `caseOf_` and `caseOf` (with and without a
@@ -139,41 +137,82 @@ causes an additional slowdown because of the list lookup. It remains
 to be checked how big the slowdown of using `caseOf` is compared to
 using `withHNF` directly.
 
-> class MkCons cs m a b | b -> m, b -> cs
+> class MkCons a
 >  where
->   mkCons :: a -> [Untyped cs m] -> b
+>   type Ctx a :: *
+>   type Mon a :: * -> *
+>   type Res a :: *
 >
-> instance (Monad m, Data a) => MkCons cs m a (Nondet cs m t)
->  where
->   mkCons c = Typed . return . mkHNF (toConstr c) . reverse
+>   mkCons :: ConsLabel -> [Untyped (Ctx a) (Mon a)] -> a
 >
-> instance MkCons cs m b c => MkCons cs m (a -> b) (Nondet cs m t -> c)
+> instance Monad m => MkCons (Nondet cs m a)
 >  where
->   mkCons c xs x = mkCons (c undefined) (untyped x:xs)
+>   type Ctx (Nondet cs m a) = cs
+>   type Mon (Nondet cs m a) = m
+>   type Res (Nondet cs m a) = a
 >
-> cons :: MkCons cs m a b => a -> b
-> cons c = mkCons c []
-
-The overloaded operation `cons` takes a Haskell constructor and yields
-a corresponding constructor function for non-deterministic values.
-
-> class ConsRep a
->  where
->   consRep :: a -> Constr
+>   mkCons l = Typed . return . Cons l . reverse
 >
-> instance ConsRep b => ConsRep (a -> b)
+> instance (MkCons b, cs ~ Ctx b, m ~ Mon b) => MkCons (Nondet cs m a -> b)
 >  where
->   consRep c = consRep (c undefined)
+>   type Ctx (Nondet cs m a -> b) = cs
+>   type Mon (Nondet cs m a -> b) = m
+>   type Res (Nondet cs m a -> b) = Res b
+>
+>   mkCons l xs x = mkCons l (untyped x:xs)
 
-We provide an overloaded operation `consRep` that yields a `Constr`
-representation for a constructor rather than for a constructed value
-like `Data.Data.toConstr` does. We do not provide the base instance
+> infixr 0 :!
+>
+> data ConsPatList a b = a :! b
 
-    instance Data a => ConsRep a
-     where
-      consRep = toConstr
+> class ConsList a
+>  where
+>   type CData a
+>
+>   consList :: [ConsLabel] -> a
 
-because this would require to allow undecidable instances. As a
-consequence, specialized base instances need to be defined for every
-used datatype. See `Data.LazyNondet.List` for an example of how to get
-the representation of polymorphic constructors and destructors.
+> instance ConsList ()
+>  where
+>   type CData () = ()
+>   consList _ = ()
+
+> instance (MkCons a, ConsList b) => ConsList (ConsPatList a b)
+>  where
+>   type CData (ConsPatList a b) = Res a
+>
+>   consList (l:ls) = mkCons l [] :! consList ls
+>   consList _ = error "consList: insufficient cons labels"
+
+> constructors :: (ConsList a, Generic (CData a)) => a
+> constructors = cs
+>  where cs = consList (consLabels (undefined `asCDataOf` cs))
+>
+> asCDataOf :: ConsList a => CData a -> a -> CData a
+> asCDataOf = const
+
+> class PatternList a
+>  where
+>   type PData a
+>
+>   patternList :: [ConsLabel] -> a
+
+> instance PatternList ()
+>  where
+>   type PData () = ()
+>   patternList _ = ()
+
+> instance (WithUntyped a, PatternList p, cs ~ C a, m ~ M a, b ~ T a)
+>       => PatternList (ConsPatList ((Context cs -> a) -> Match t cs m b) p)
+>  where
+>   type PData (ConsPatList ((Context cs -> a) -> Match t cs m b) p) = t
+>
+>   patternList (l:ls) = match (index l) :! patternList ls
+>   patternList _ = error "patternList: insufficient cons labels"
+
+> patterns :: (PatternList a, Generic (PData a)) => a
+> patterns = cs
+>  where cs = patternList (consLabels (undefined `asPDataOf` cs))
+>
+> asPDataOf :: PatternList a => PData a -> a -> PData a
+> asPDataOf = const
+
