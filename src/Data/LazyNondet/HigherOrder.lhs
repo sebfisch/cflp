@@ -49,9 +49,6 @@ lambda.
 
 Here are private type classes that are used to implement `fun`.
 
-> newtype Lifted cs m a b
->   = Lifted { lifted :: Nondet cs m a -> Context cs -> ID -> Nondet cs m b }
-
 > class NestLambda a
 >  where
 >   type C a :: *
@@ -62,22 +59,24 @@ Here are private type classes that are used to implement `fun`.
 
 Single-argument functions can be lifted using `lambda`.
 
-> instance NestLambda (Lifted cs m a b)
+> instance NestLambda (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
 >  where
->   type C (Lifted cs m a b) = cs
->   type M (Lifted cs m a b) = m
->   type T (Lifted cs m a b) = a -> b
+>   type C (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = cs
+>   type M (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = m
+>   type T (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = a -> b
 >
->   nestLambda = lambda . lifted
+>   nestLambda = lambda
 
 If we have a function on non-deterministic data we can lift it to the
 `Nondet` type with the following instance.
 
-> instance (NestLambda f, C f ~ cs, M f ~ m) => NestLambda (Nondet cs m a -> f)
+> instance (NestLambda (Nondet cs m b -> f),
+>           C (Nondet cs m b -> f) ~ cs, M  (Nondet cs m b -> f) ~ m)
+>       => NestLambda (Nondet cs m a -> Nondet cs m b -> f)
 >  where
->   type C (Nondet cs m a -> f) = cs
->   type M (Nondet cs m a -> f) = m
->   type T (Nondet cs m a -> f) = a -> T f
+>   type C (Nondet cs m a -> Nondet cs m b -> f) = cs
+>   type M (Nondet cs m a -> Nondet cs m b -> f) = m
+>   type T (Nondet cs m a -> Nondet cs m b -> f) = a -> T (Nondet cs m b -> f)
 >
 >   nestLambda f = lambda (\x _ _ -> nestLambda (f x))
 
@@ -98,33 +97,36 @@ We provide a combinator `liftFun` for
 >
 > instance LiftFun (Nondet cs m a -> Nondet cs m b)
 >  where
->   type Lift (Nondet cs m a -> Nondet cs m b) = Lifted cs m a b
+>   type Lift (Nondet cs m a -> Nondet cs m b)
+>     = Nondet cs m a -> Context cs -> ID -> Nondet cs m b
 >
->   liftFun f = Lifted (\x _ _ -> f x)
+>   liftFun f x _ _ = f x
 >
 > instance LiftFun (Nondet cs m a -> Context cs -> Nondet cs m b)
 >  where
->   type Lift (Nondet cs m a -> Context cs -> Nondet cs m b) = Lifted cs m a b
+>   type Lift (Nondet cs m a -> Context cs -> Nondet cs m b)
+>     = Nondet cs m a -> Context cs -> ID -> Nondet cs m b
 >
->   liftFun f = Lifted (\x cs _ -> f x cs)
+>   liftFun f x cs _ = f x cs
 >
 > instance LiftFun (Nondet cs m a -> ID -> Nondet cs m b)
 >  where
->   type Lift (Nondet cs m a -> ID -> Nondet cs m b) = Lifted cs m a b
+>   type Lift (Nondet cs m a -> ID -> Nondet cs m b)
+>     = Nondet cs m a -> Context cs -> ID -> Nondet cs m b
 >
->   liftFun f = Lifted (\x _ u -> f x u)
+>   liftFun f x _ u = f x u
 >
 > instance LiftFun (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
 >  where
 >   type Lift (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
->           = Lifted cs m a b
+>     = Nondet cs m a -> Context cs -> ID -> Nondet cs m b
 >
->   liftFun = Lifted
+>   liftFun = id
 >
 > instance LiftFun (Nondet cs m b -> f)
 >       => LiftFun (Nondet cs m a -> Nondet cs m b -> f)
 >  where
 >   type Lift (Nondet cs m a -> Nondet cs m b -> f)
->           = Nondet cs m a -> Lift (Nondet cs m b -> f)
+>     = Nondet cs m a -> Lift (Nondet cs m b -> f)
 >
 >   liftFun f = liftFun . f

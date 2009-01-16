@@ -12,7 +12,7 @@ the instances for classes defined in this module.
 >
 > module Data.LazyNondet.Generic (
 >
->   Generic(..), GenericOps, generic, primitive, nondet, consLabels,
+>   Generic(..), GenericOps, generic, primitive, consLabels,
 >
 >   ApplyCons(..), Decons, (!), cons
 >
@@ -49,17 +49,6 @@ wrapper functions that always succeed:
 >
 > primitive :: Generic a => NormalForm -> a
 > primitive = fromJust . prim genericOps
-
-We also provide a generic operation `nondet` to translate instances of
-`Generic` into non-deterministic data.
-
-> nondet :: (Monad m, Generic a) => a -> Nondet cs m a
-> nondet = Typed . nf2hnf . generic
->
-> nf2hnf :: Monad m => NormalForm -> Untyped cs m
-> nf2hnf (Var _) = error "Primitive.nf2hnf: cannot convert logic variable"
-> nf2hnf (Fun _) = error "nf2hnf: conversion of function not yet implemented"
-> nf2hnf (Data label args) = return (Cons label (map nf2hnf args))
 
 The operation `consLabels` yields the list of constructors
 corresponding to a datatype `a`.
@@ -150,7 +139,9 @@ Deconstructors are also defined mechanically:
 Combinators
 -----------
 
-The combinator `(!)` used to enumerate the constructors of a datatype combines records with generic operations. The integer argument is used to label the different constructors.
+The combinator `(!)` used to enumerate the constructors of a datatype
+combines records with generic operations. The integer argument is used
+to label the different constructors.
 
 > infixr 0 !
 > (!) :: (Int -> GenericOps a) -> (Int -> GenericOps a) -> Int -> GenericOps a
