@@ -107,6 +107,9 @@ rev = flip (foldr (\x f l -> f (x:l)) id) []
 >   comp = rev (false ^: false ^: true ^: nil)
 >   rev  = flip (fun (foldr (fun (\x f l -> apply f (x ^: l))) (fun id))) nil
 >
+> flip :: CFLP cs m
+>      => Nondet cs m (a -> b -> c) -> Nondet cs m b -> Nondet cs m a
+>      -> Context cs -> ID -> Nondet cs m c
 > flip f x y cs = withUnique $ \u -> apply (apply f y cs u) x cs
 > 
 > id :: Nondet cs m a -> Nondet cs m a
