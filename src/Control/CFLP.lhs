@@ -5,17 +5,21 @@ This module provides an interface that can be used for constraint
 functional-logic programming in Haskell.
 
 > {-# LANGUAGE
+>       GeneralizedNewtypeDeriving,
 >       MultiParamTypeClasses,
 >       FlexibleInstances,
 >       FlexibleContexts,
+>       TypeFamilies,
 >       RankNTypes
 >   #-}
 >
 > module Control.CFLP (
 >
->   CFLP, CS, UpdateT, ChoiceStore, Computation, eval, evalPartial, evalPrint,
+>   CFLP, Enumerable(..), Ctx, Data, Computation,
 >
->   Strategy, depthFirst,
+>   eval, evalPartial, evalPrint,
+>
+>   Monadic(..), UpdateT,
 >
 >   module Data.LazyNondet
 >
@@ -27,63 +31,48 @@ functional-logic programming in Haskell.
 > import Control.Monad.Update
 > import Control.Monad.Trans.Update
 >
-> import Control.Constraint.Choice
+> import Control.Strategy
+
+The type class `CFLP` amalgamates all class constraints on constraint
+functional-logic computations.
+
+> class (Strategy (Ctx s) s, MonadPlus s
+>                          , MonadUpdate (Ctx s) s
+>                          , Update (Ctx s) s s
+>                          , Update (Ctx s) s (Res s)
+>                          , MonadPlus (Res s)
+>                          , Enumerable (Res s))
+>    => CFLP s
 >
-> class (MonadUpdate s m, Update s m m, ChoiceStore s) => CFLP s m
+> instance (MonadPlus m, Enumerable m) => CFLP (Monadic (UpdateT () m))
 
-The type class `CFLP` is a shortcut for the type-class constraints on
-constraint functional-logic computations that are parameterized over a
-constraint store and a constraint monad. Hence, such computations can
-be executed with different constraint stores and search strategies.
+We define a shortcut for types of constraint functional-logic data and
+computations that can be parameterized by an arbitrary strategy.
 
-> instance CFLP ChoiceStoreIM (UpdateT ChoiceStoreIM [])
-
-We declare instances for every combination of monad and constraint
-store that we intend to use.
-
-> type CS = ChoiceStoreIM
+> type Data s a = Nondet (Ctx s) s a
 >
-> noConstraints :: Context CS
-> noConstraints = Context noChoices
+> type Computation a
+>   = forall s . CFLP s => Context (Ctx s) -> ID -> Data s a
+
+We provide
+
+  * an `eval` operation to compute Haskell terms from
+    non-deterministic data,
+
+  * an operation `evalPartial` to compute partial Haskell terms where
+    logic variables are replaced with an error, and
+
+  * an `evalPrint` operation that interactively shows (partial)
+    solutions of a constraint functional-logic computation.
+
+> eval, evalPartial
+>   :: (Monad s, CFLP s, Generic a) => s (Ctx s) -> Computation a -> IO [a]
+> eval        s = liftM (liftM primitive) . evaluate s groundNormalForm
+> evalPartial s = liftM (liftM primitive) . evaluate s partialNormalForm
 >
-> type Computation m a = Context CS -> ID -> Nondet CS (UpdateT CS m) a
-
-Currently, the constraint store used to evaluate constraint
-functional-logic programs is simply a `ChoiceStore`. It will be a
-combination of different constraint stores, when more constraint
-solvers have been implemented.
-
-> type Strategy m = forall a . m a -> [a]
-
-A `Strategy` specifies how to enumerate non-deterministic results in a
-list.
-
-> depthFirst :: Strategy []
-> depthFirst = id
-
-The strategy of the list monad is depth-first search.
-
-> evaluate :: (CFLP CS m, Update CS m m')
->          => (Nondet CS m a -> Context CS -> m' b)
->          -> Strategy m' -> (Context CS -> ID -> Nondet CS m a)
->          -> IO [b]
-> evaluate evalNondet enumerate op = do
->   i <- initID
->   return $ enumerate $ evalNondet (op noConstraints i) noConstraints
-
-The `evaluate` function enumerates the non-deterministic solutions of a
-constraint functional-logic computation according to a given strategy.
-
-> eval, evalPartial :: (CFLP CS m, Update CS m m', Generic a)
->                   => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
->                   -> IO [a]
-> eval        s = liftM (map primitive) . evaluate groundNormalForm  s
-> evalPartial s = liftM (map primitive) . evaluate partialNormalForm s
->
-> evalPrint :: (CFLP CS m, Update CS m m', Generic a)
->           => Strategy m' -> (Context CS -> ID -> Nondet CS m a)
->           -> IO ()
-> evalPrint s op = evaluate partialNormalForm s op >>= printSols
+> evalPrint :: (Monad s, CFLP s, Generic a)
+>           => s (Ctx s) -> Computation a -> IO ()
+> evalPrint s op = evaluate s partialNormalForm op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
@@ -97,13 +86,15 @@ constraint functional-logic computation according to a given strategy.
 >     then mapM_ print xs
 >     else printSols xs
 
-We provide
+The `evaluate` function enumerates the non-deterministic solutions of a
+constraint functional-logic computation according to a given strategy.
 
-  * an `eval` operation to compute Haskell terms from
-    non-deterministic data,
-
-  * an operation `evalPartial` to compute partial Haskell terms where
-    logic variables are replaced with an error, and
-
-  * an `evalPrint` operation that interactively shows (partial)
-    solutions of a constraint functional-logic computation.
+> evaluate :: CFLP s
+>          => s (Ctx s)
+>          -> (Nondet (Ctx s) s a -> Context (Ctx s) -> Res s b)
+>          -> Computation a
+>          -> IO [b]
+> evaluate s evalNondet op = do
+>   i <- initID
+>   return $ enumeration $
+>     evalNondet (op (Context (emptyContext s)) i) $ Context (emptyContext s)

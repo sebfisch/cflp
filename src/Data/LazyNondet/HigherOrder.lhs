@@ -33,7 +33,7 @@ lifted to the `Nondet` type.
 
 To apply a lambda, we provide the combinator `apply`.
 
-> apply :: Update cs m m
+> apply :: (Monad m, Update cs m m)
 >       => Nondet cs m (a -> b) -> Nondet cs m a
 >       -> Context cs -> ID -> Nondet cs m b
 > apply f x cs u = withHNF f (\f cs ->
@@ -122,7 +122,7 @@ We provide a combinator `liftFun` for
 >   type Lift (Nondet cs m a -> ID -> Nondet cs m b)
 >     = Nondet cs m a -> Context cs -> ID -> Nondet cs m b
 >
->   liftFun f x _ u = f x u
+>   liftFun f x _ = f x
 >
 > instance LiftFun (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
 >  where

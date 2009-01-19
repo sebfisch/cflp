@@ -45,14 +45,17 @@ Library
                     Control.CFLP.Tests.CallTimeChoice
                     Control.CFLP.Tests.HigherOrder
   Hs-Source-Dirs:   src
-  Extensions:       NoMonomorphismRestriction,
+  Extensions:       GeneralizedNewtypeDeriving,
+                    NoMonomorphismRestriction,
                     FunctionalDependencies,
                     MultiParamTypeClasses,
                     UndecidableInstances,
+                    OverlappingInstances,
                     FlexibleInstances,
                     FlexibleContexts,
                     NoMonoPatBinds,
                     PatternGuards,
+                    TypeOperators,
                     TypeFamilies,
                     RankNTypes
   Ghc-Options:      -Wall -fno-warn-orphans -fno-warn-name-shadowing

@@ -32,8 +32,8 @@ that collects all defined tests.
 >  where
 >   comp cs u = ignot (error "illegal demand") (unknown u) cs
 >
-> ignot :: CFLP cs m
->       => Nondet cs m a -> Nondet cs m Bool -> Context cs -> Nondet cs m Bool
+> ignot :: CFLP s
+>       => Data s a -> Data s Bool -> Context (Ctx s) -> Data s Bool
 > ignot _ = not
 
 This test checks a function with two arguments, where the first must
@@ -73,8 +73,8 @@ something that is shared.
 >  where
 >   comp cs u = negHeads (unknown u) cs
 >
-> negHeads :: CFLP cs m
->          => Nondet cs m [Bool] -> Context cs -> Nondet cs m [Bool]
+> negHeads :: CFLP s
+>          => Data s [Bool] -> Context (Ctx s) -> Data s [Bool]
 > negHeads l cs = not (head l cs) cs ^: head l cs ^: nil
 
 This test checks whether sharing is ensured on aruments of compound

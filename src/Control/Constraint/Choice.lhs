@@ -17,7 +17,7 @@ the same value if they are shared.
 >
 > module Control.Constraint.Choice (
 >
->   ChoiceStore(..), ChoiceStoreIM, noChoices, choice
+>   ChoiceStore(..), ChoiceStoreIM, noChoices, labeledChoices
 >
 > ) where
 >
@@ -26,10 +26,10 @@ the same value if they are shared.
 >
 > import qualified Data.IntMap as IM
 >
-> class ChoiceStore s
+> class ChoiceStore c
 >  where
->   lookupChoice :: Int -> s -> Maybe Int
->   assertChoice :: MonadPlus m => s -> Int -> Int -> s -> m s
+>   lookupChoice :: Int -> c -> Maybe Int
+>   assertChoice :: MonadPlus m => c -> Int -> Int -> c -> m c
 
 We define an interface for choice stores that provide an operation to
 lookup a previously made choice. The first argument of `assertChoice`
@@ -55,18 +55,18 @@ A finite map mapping unique identifiers to integers is a
 `ChoiceStore`. The `assertChoice` operations fails to insert
 conflicting choices.
 
-> choice :: (MonadUpdate s m, ChoiceStore s) => s -> Int -> [m a] -> m a
-> choice cs u xs =
->   maybe (foldr1 mplus . (mzero:) . zipWith constrain [(0::Int)..] $ xs)
->         (xs!!)
->         (lookupChoice u cs)
->  where constrain n = (update (assertChoice cs u n)>>)
+> labeledChoices :: (Monad m, ChoiceStore c, MonadUpdate c m)
+>                => c -> Int -> [m a] -> [m a]
+> labeledChoices c u xs =
+>   maybe (zipWith constrain [(0::Int)..] xs)
+>         ((:[]).(xs!!))
+>         (lookupChoice u c)
+>  where constrain n = (update (assertChoice c u n)>>)
 
-The operation `choice` takes a unique label and a list of monadic
-values that can be constrained with choice constraints. The result is
-a single monadic action combining the alternatives with `mplus`. If it
-occurs more than once in a bigger monadic action, the result is
-constrained to take the same alternative everywhere when collecting
+The operation `labelChoices` takes a unique label and a list of
+monadic values that can be constrained with choice constraints. The
+result is a list of monadic actions that are constrained to take the
+same alternative at every shared occurrence when collecting
 constraints.
 
 If a choice with the same label has been created previously and the

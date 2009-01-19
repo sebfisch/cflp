@@ -18,7 +18,7 @@ non-deterministically update state.
 > 
 > import Control.Monad.State
 >
-> class MonadPlus m => MonadUpdate s m
+> class MonadUpdate s m
 >  where
 >   update :: (forall m' . MonadPlus m' => s -> m' s) -> m ()
 
@@ -33,7 +33,7 @@ monadic update-action into monadic computations.
 An instance of `MonadPlus` that threads a state can update that state
 non-deterministically.
 
-> class (MonadPlus m, MonadPlus m') => Update s m m'
+> class Update s m m'
 >  where
 >   updateState :: m a -> StateT s m' a
 

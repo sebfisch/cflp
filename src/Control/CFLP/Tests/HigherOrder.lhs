@@ -34,6 +34,7 @@ The following test simply applies the not function.
 > applyNotFunction :: Assertion
 > applyNotFunction = assertResults comp [True]
 >  where
+>   comp :: Computation Bool
 >   comp = apply (fun not) false
 
 The following test applies the binary list constructor.
@@ -41,6 +42,7 @@ The following test applies the binary list constructor.
 > applyBinCons :: Assertion
 > applyBinCons = assertResults comp [[True]]
 >  where
+>   comp :: Computation [Bool]
 >   comp cs = withUnique $ \u1 u2 ->
 >               apply (apply (fun (^:)) true cs u1) nil cs u2
 
@@ -50,6 +52,7 @@ choice.
 > applyChoice :: Assertion
 > applyChoice = assertResults comp [False,True]
 >  where
+>   comp :: Computation Bool
 >   comp cs = withUnique $ \u1 u2 ->
 >               apply (apply (fun (?)) false cs u1) true cs u2
 
@@ -59,6 +62,7 @@ when applying the choice combinator using higher-order features.
 > callTimeChoice :: Assertion
 > callTimeChoice = assertResults comp [[False,False],[True,True]]
 >  where
+>   comp :: Computation [Bool]
 >   comp cs = withUnique $ \u1 u2 u3 ->
 >               apply (fun two)
 >                     (apply (apply (fun (?)) false cs u1) true cs u2) cs u3
@@ -72,6 +76,7 @@ duplicated free variable.
 > mapSharedUnknowns :: Assertion
 > mapSharedUnknowns = assertResults comp [[True,True],[False,False]]
 >  where
+>   comp :: Computation [Bool]
 >   comp cs = withUnique $ \u -> map (fun not) (two (unknown u)) cs
 
 The following test checks the member operation defined using `foldr`.
@@ -79,20 +84,19 @@ The following test checks the member operation defined using `foldr`.
 > memberWithFold :: Assertion
 > memberWithFold = assertResults comp [True,False]
 >  where
+>   comp :: Computation Bool
 >   comp = foldr (fun (?)) failure (true ^: false ^: nil)
 
 The following test applies the composition function which is has a
 function on its right-hand side:
 
-> after :: CFLP cs m
->       => Nondet cs m (b -> c) -> Nondet cs m (a -> b)
->       -> Nondet cs m (a -> c)
+> after :: CFLP s => Data s (b -> c) -> Data s (a -> b) -> Data s (a -> c)
 > after f g = fun (\x cs -> withUnique $ \u -> apply f (apply g x cs u) cs)
 >
 > overApplication :: Assertion
 > overApplication = assertResults comp [True]
 >  where
->   comp :: CFLP cs m => Context cs -> ID -> Nondet cs m Bool
+>   comp :: Computation Bool
 >   comp = apply (after (fun not) (fun not)) true
 
 The following test makes extensive use of higher-order features by
@@ -105,16 +109,18 @@ rev = flip (foldr (\x f l -> f (x:l)) id) []
 > reverseWithFoldr :: Assertion
 > reverseWithFoldr = assertResults comp [[True,False,False]]
 >  where
+>   comp :: Computation [Bool]
 >   comp = rev (false ^: false ^: true ^: nil)
 >
+>   rev :: CFLP s => Data s [Bool] -> Context (Ctx s) -> ID -> Data s [Bool]
 >   rev = flip (fun (foldr (fun (\x f l -> apply f (x ^: l))) (fun id))) nil
 >
-> flip :: CFLP cs m
->      => Nondet cs m (a -> b -> c) -> Nondet cs m b -> Nondet cs m a
->      -> Context cs -> ID -> Nondet cs m c
+> flip :: CFLP s
+>      => Data s (a -> b -> c) -> Data s b -> Data s a
+>      -> Context (Ctx s) -> ID -> Data s c
 > flip f x y cs = withUnique $ \u -> apply (apply f y cs u) x cs
 > 
-> id :: Nondet cs m a -> Nondet cs m a
+> id :: Data s a -> Data s a
 > id x = x
 
 The following uses even more higher-order functions by implementing a
@@ -127,10 +133,12 @@ rev = flip (foldr (flip (flip ((.).(.)) (:))) id) []
 > pointfreeReverse :: Assertion
 > pointfreeReverse = assertResults comp [[True,False,False]]
 >  where
+>   comp :: Computation [Bool]
 >   comp = apply rev (false ^: false ^: true ^: nil)
 >
+>   rev :: CFLP s => Data s ([Bool] -> [Bool])
 >   rev = fun (flip (fun (foldr (fun (flip (fun (flip 
->    ((fun after `after` fun after)) (fun (^:)))))) (fun id))) nil)
+>    (fun after `after` fun after) (fun (^:)))))) (fun id))) nil)
 
 The following test converts primitive Haskell functions to
 non-deterministic ones and applies them to non-deterministic values.
@@ -138,6 +146,7 @@ non-deterministic ones and applies them to non-deterministic values.
 > functionConversion :: Assertion
 > functionConversion = assertResults comp [False]
 >  where
+>   comp :: Computation Bool
 >   comp cs = withUnique $ \u ->
 >              apply (foldr (fun after) (fun id)
 >                       (nondet [P.not,P.not,P.not]) cs u)

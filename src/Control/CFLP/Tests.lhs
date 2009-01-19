@@ -3,26 +3,30 @@
 
 This module defines auxiliary functions for the test suite.
 
+> {-# LANGUAGE RankNTypes #-}
+>
 > module Control.CFLP.Tests where
 >
 > import Control.CFLP
+> import Control.CFLP.Strategies.DepthFirstSearch
+>
 > import Test.HUnit
 
 We use HUnit for testing because we need to test IO actions and want
 to use errors when testing laziness.
 
 > assertResults :: (Generic a, Show a, Eq a)
->               => (Computation [] a) -> [a] -> Assertion
+>               => Computation a -> [a] -> Assertion
 > assertResults = assertResultsLimit Nothing
 >
 > assertResultsN :: (Generic a, Show a, Eq a)
->                => Int -> (Computation [] a) -> [a] -> Assertion
+>                => Int -> Computation a -> [a] -> Assertion
 > assertResultsN = assertResultsLimit . Just
 >
 > assertResultsLimit :: (Generic a, Show a, Eq a)
->                    => Maybe Int -> (Computation [] a) -> [a] -> Assertion
+>                    => Maybe Int -> Computation a -> [a] -> Assertion
 > assertResultsLimit limit op expected = do
->   actual <- eval depthFirst op
+>   actual <- eval (dfs ()) op
 >   maybe id take limit actual @?= expected
 
 We provide auxiliary assertions `assertResults...` that compute (a

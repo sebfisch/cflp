@@ -22,7 +22,7 @@
 > import Control.Monad.State
 > import Control.Monad.Update
 >
-> withHNF :: Update cs m m
+> withHNF :: (Monad m, Update cs m m)
 >         => Nondet cs m a
 >         -> (HeadNormalForm cs m -> Context cs -> Nondet cs m b)
 >         -> Context cs -> Nondet cs m b
@@ -111,20 +111,22 @@ non-deterministic values that can be used with `caseOf`.
 
 Failure is just a type version of `mzero`.
 
-> caseOf :: Update cs m m
+> caseOf :: (MonadPlus m, Update cs m m)
 >        => Nondet cs m a -> [Match a cs m b] -> Context cs -> Nondet cs m b
 > caseOf x bs = caseOf_ x bs failure
 >
-> caseOf_ :: Update cs m m
+> caseOf_ :: (Monad m, Update cs m m)
 >         => Nondet cs m a -> [Match a cs m b] -> Nondet cs m b
 >         -> Context cs -> Nondet cs m b
 > caseOf_ x bs def =
 >   withHNF x $ \hnf cs ->
 >   case hnf of
 >     FreeVar _ y -> caseOf_ (Typed y) bs def cs
->     Delayed p res
->       | p cs      -> delayed p (\cs -> caseOf_ (Typed (res cs)) bs def cs)
->       | otherwise -> caseOf_ (Typed (res cs)) bs def cs
+>     Delayed isn res -> Typed . join . liftM untyped $ do
+>       narrowed <- isn cs
+>       return $ if narrowed
+>                 then caseOf_ (Typed (res cs)) bs def cs
+>                 else delayed isn (\cs -> caseOf_ (Typed (res cs)) bs def cs)
 >     Cons label args ->
 >       maybe def (\b -> b cs args) (lookup (index label) (map unMatch bs))
 >     Lambda _ -> error "Data.LazyNondet.Matching.caseOf: cannot match lambda"

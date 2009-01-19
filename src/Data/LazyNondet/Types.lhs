@@ -44,7 +44,7 @@ defines a tree of constructors and logic variables or functions.
 > data HeadNormalForm cs m
 >   = Cons ConsLabel [Untyped cs m]
 >   | FreeVar ID (Untyped cs m)
->   | Delayed (Context cs -> Bool) (Context cs -> Untyped cs m)
+>   | Delayed (Context cs -> m Bool) (Context cs -> Untyped cs m)
 >   | Lambda (Untyped cs m -> Context cs -> ID -> Untyped cs m)
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
@@ -71,7 +71,7 @@ that creates the variable.
 The function `freeVar` is used to put a name around a narrowed free
 variable.
 
-> delayed :: Monad m => (Context cs -> Bool) -> (Context cs -> Nondet cs m a)
+> delayed :: Monad m => (Context cs -> m Bool) -> (Context cs -> Nondet cs m a)
 >         -> Nondet cs m a
 > delayed p resume = Typed . return . Delayed p $ (untyped . resume)
 
@@ -82,7 +82,8 @@ care: `delayed` intentionally destroys sharing!
 
 The first parameter is a predicate on constraint stores that specifies
 whether the result of pattern matching the constructed delayed value
-should be delayed again.
+is narrowed w.r.t. the current evaluation context. If it is not,
+pattern matching on it will be delayed again.
 
 `Show` Instances
 ----------------
