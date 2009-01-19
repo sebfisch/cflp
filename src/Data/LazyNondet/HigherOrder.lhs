@@ -6,7 +6,10 @@ This module defines combinators for higher-order CFLP.
 > {-# LANGUAGE 
 >       TypeFamilies,
 >       FlexibleInstances,
->       FlexibleContexts
+>       FlexibleContexts,
+>       MultiParamTypeClasses,
+>       FunctionalDependencies,
+>       UndecidableInstances
 >   #-}
 >
 > module Data.LazyNondet.HigherOrder (
@@ -43,42 +46,47 @@ The overloaded operation `fun` converts a function on
 non-deterministic data (of arbitrary arity) into a (possibly nested)
 lambda.
 
-> fun :: (Monad m, LiftFun f, NestLambda g, g ~ Lift f, m~M g, cs~C g, t~T g)
+> fun :: (Monad m, LiftFun f, NestLambda cs m t (Lift f))
 >     => f -> Nondet cs m t
 > fun = nestLambda . liftFun
 
 Here are private type classes that are used to implement `fun`.
 
-> class NestLambda a
+> class NestLambda cs m t a | a -> cs, a -> m, a -> t
 >  where
->   type C a :: *
->   type M a :: * -> *
->   type T a :: *
->
->   nestLambda :: Monad (M a) => a -> Nondet (C a) (M a) (T a)
+>   nestLambda :: Monad m => a -> Nondet cs m t
 
 Single-argument functions can be lifted using `lambda`.
 
-> instance NestLambda (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
+> instance NestLambda cs m (a -> b)
+>            (Nondet cs m a -> Context cs -> ID -> Nondet cs m b)
 >  where
->   type C (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = cs
->   type M (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = m
->   type T (Nondet cs m a -> Context cs -> ID -> Nondet cs m b) = a -> b
->
 >   nestLambda = lambda
 
 If we have a function on non-deterministic data we can lift it to the
 `Nondet` type with the following instance.
 
-> instance (NestLambda (Nondet cs m b -> f),
->           C (Nondet cs m b -> f) ~ cs, M  (Nondet cs m b -> f) ~ m)
->       => NestLambda (Nondet cs m a -> Nondet cs m b -> f)
+> instance NestLambda cs m t (Nondet cs m b -> f)
+>       => NestLambda cs m (a -> t) (Nondet cs m a -> Nondet cs m b -> f)
 >  where
->   type C (Nondet cs m a -> Nondet cs m b -> f) = cs
->   type M (Nondet cs m a -> Nondet cs m b -> f) = m
->   type T (Nondet cs m a -> Nondet cs m b -> f) = a -> T (Nondet cs m b -> f)
->
 >   nestLambda f = lambda (\x _ _ -> nestLambda (f x))
+
+We'd prefer to use type families instead of fundeps (to get rif of the
+undecidable instances pragma) but the following instance causes very
+long type checking -- probably because of incompletely handled
+super-class equalities in the current version of GHC:
+
+~~~
+instance (NestLambda (Nondet cs m b -> f),
+          C (Nondet cs m b -> f) ~ cs, M  (Nondet cs m b -> f) ~ m)
+      => NestLambda (Nondet cs m a -> Nondet cs m b -> f)
+ where
+  type C (Nondet cs m a -> Nondet cs m b -> f) = cs
+  type M (Nondet cs m a -> Nondet cs m b -> f) = m
+  type T (Nondet cs m a -> Nondet cs m b -> f) = a -> T (Nondet cs m b -> f)
+
+  nestLambda f = lambda (\x _ _ -> nestLambda (f x))
+~~~
 
 We provide a combinator `liftFun` for 
 

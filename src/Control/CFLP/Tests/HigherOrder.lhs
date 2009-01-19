@@ -25,8 +25,8 @@ functional-logic programs.
 >   , "memeber with fold" ~: memberWithFold
 >   , "overApplication" ~: overApplication
 >   , "reverse with foldr" ~: reverseWithFoldr
->   -- , "pointfree reverse" ~: pointfreeReverse
->   -- , "function conversion" ~: functionConversion
+>   , "pointfree reverse" ~: pointfreeReverse
+>   , "function conversion" ~: functionConversion
 >   ]
 
 The following test simply applies the not function.
@@ -92,6 +92,7 @@ function on its right-hand side:
 > overApplication :: Assertion
 > overApplication = assertResults comp [True]
 >  where
+>   comp :: CFLP cs m => Context cs -> ID -> Nondet cs m Bool
 >   comp = apply (after (fun not) (fun not)) true
 
 The following test makes extensive use of higher-order features by
@@ -105,7 +106,8 @@ rev = flip (foldr (\x f l -> f (x:l)) id) []
 > reverseWithFoldr = assertResults comp [[True,False,False]]
 >  where
 >   comp = rev (false ^: false ^: true ^: nil)
->   rev  = flip (fun (foldr (fun (\x f l -> apply f (x ^: l))) (fun id))) nil
+>
+>   rev = flip (fun (foldr (fun (\x f l -> apply f (x ^: l))) (fun id))) nil
 >
 > flip :: CFLP cs m
 >      => Nondet cs m (a -> b -> c) -> Nondet cs m b -> Nondet cs m a
@@ -122,23 +124,13 @@ pointfree version of the above reverse function.
 rev = flip (foldr (flip (flip ((.).(.)) (:))) id) []
 ~~~
 
--- > pointfreeReverse :: Assertion
--- > pointfreeReverse = assertResults comp [[True,False,False]]
--- >  where
--- >   comp cs = withUnique $ \u ->
--- >               apply (rev cs u) (false ^: false ^: true ^: nil) cs
--- > rev cs u = fun (flip (fun (foldr (fun (flip (fun (flip ((fun after `after` fun after) cs u) (fun (^:)))))) (fun id))) nil)
-
-Currently, GHC (6.10.1) fails to compile the definition. The problem
-seems to occur with many uses of `fun`:
-
--- > compileTimePerformanceBug
--- >   = fun id `after` fun id
--- >            `after` fun id
--- >            `after` fun id
--- >            `after` fun id
--- >            `after` fun id
--- >            `after` fun id
+> pointfreeReverse :: Assertion
+> pointfreeReverse = assertResults comp [[True,False,False]]
+>  where
+>   comp = apply rev (false ^: false ^: true ^: nil)
+>
+>   rev = fun (flip (fun (foldr (fun (flip (fun (flip 
+>    ((fun after `after` fun after)) (fun (^:)))))) (fun id))) nil)
 
 The following test converts primitive Haskell functions to
 non-deterministic ones and applies them to non-deterministic values.
