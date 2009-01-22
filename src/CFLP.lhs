@@ -13,7 +13,7 @@ functional-logic programming in Haskell.
 >       RankNTypes
 >   #-}
 >
-> module Control.CFLP (
+> module CFLP (
 >
 >   CFLP, Enumerable(..), Ctx, Data, Computation,
 >
@@ -21,17 +21,15 @@ functional-logic programming in Haskell.
 >
 >   Monadic(..), UpdateT,
 >
->   module Data.LazyNondet
+>   module CFLP.Data
 >
 > ) where
 >
-> import Data.LazyNondet
->
 > import Control.Monad.State
-> import Control.Monad.Update
-> import Control.Monad.Trans.Update
 >
-> import Control.Strategy
+> import CFLP.Data
+> import CFLP.Control.Monad.Update
+> import CFLP.Control.Strategy
 
 The type class `CFLP` amalgamates all class constraints on constraint
 functional-logic computations.

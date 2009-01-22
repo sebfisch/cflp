@@ -12,16 +12,16 @@ This module defines combinators for higher-order CFLP.
 >       UndecidableInstances
 >   #-}
 >
-> module Data.LazyNondet.HigherOrder (
+> module CFLP.Data.HigherOrder (
 >
 >   fun, apply
 >
 > ) where
 >
-> import Data.LazyNondet.Types
-> import Data.LazyNondet.Matching ( withHNF )
+> import CFLP.Data.Types
+> import CFLP.Data.Matching ( withHNF )
 >
-> import Control.Monad.Update
+> import CFLP.Control.Monad.Update
 
 With the `lambda` combinator functions on non-deterministic data are
 lifted to the `Nondet` type.
@@ -40,7 +40,7 @@ To apply a lambda, we provide the combinator `apply`.
 >   case f of
 >     Lambda f -> Typed (f (untyped x) cs u)
 >     FreeVar _ f -> apply (Typed f) x cs u
->     _ -> error "Data.LazyNondet.HigherOrder: cannot apply") cs
+>     _ -> error "CFLP.Data.HigherOrder: cannot apply") cs
 
 The overloaded operation `fun` converts a function on
 non-deterministic data (of arbitrary arity) into a (possibly nested)

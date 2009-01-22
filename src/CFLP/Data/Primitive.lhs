@@ -1,7 +1,7 @@
 % Primitive Generic Functions on Lazy Non-Deterministic Data
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
-> module Data.LazyNondet.Primitive (
+> module CFLP.Data.Primitive (
 >
 >   nondet, groundNormalForm, partialNormalForm,
 >
@@ -9,15 +9,15 @@
 >
 > ) where
 >
-> import Data.LazyNondet.Types
-> import Data.LazyNondet.Generic
+> import Data.Supply
 >
 > import Control.Monad.State
-> import Control.Monad.Update
 >
-> import Control.Strategy
+> import CFLP.Data.Types
+> import CFLP.Data.Generic
 >
-> import Data.Supply
+> import CFLP.Control.Monad.Update
+> import CFLP.Control.Strategy
 
 We provide a generic operation `nondet` to translate instances of
 `Generic` into non-deterministic data.

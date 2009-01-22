@@ -4,7 +4,7 @@
 This module provides a datatype with operations for lazy
 non-deterministic programming.
 
-> module Data.LazyNondet (
+> module CFLP.Data (
 >
 >   NormalForm, Nondet, Context(..),
 >
@@ -28,10 +28,10 @@ non-deterministic programming.
 >
 > ) where
 >
-> import Data.LazyNondet.Types
-> import Data.LazyNondet.Generic
-> import Data.LazyNondet.UniqueID
-> import Data.LazyNondet.Matching
-> import Data.LazyNondet.Narrowing
-> import Data.LazyNondet.Primitive
-> import Data.LazyNondet.HigherOrder
+> import CFLP.Data.Types
+> import CFLP.Data.Generic
+> import CFLP.Data.UniqueID
+> import CFLP.Data.Matching
+> import CFLP.Data.Narrowing
+> import CFLP.Data.Primitive
+> import CFLP.Data.HigherOrder

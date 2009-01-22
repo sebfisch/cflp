@@ -8,7 +8,7 @@
 >       FlexibleInstances
 >   #-}
 >
-> module Data.LazyNondet.Matching (
+> module CFLP.Data.Matching (
 >
 >   Match, ConsPatList(..), constructors, patterns,
 >
@@ -16,11 +16,12 @@
 >
 > ) where
 >
-> import Data.LazyNondet.Types
-> import Data.LazyNondet.Generic
->
 > import Control.Monad.State
-> import Control.Monad.Update
+>
+> import CFLP.Data.Types
+> import CFLP.Data.Generic
+>
+> import CFLP.Control.Monad.Update
 >
 > withHNF :: (Monad m, Update cs m m)
 >         => Nondet cs m a
@@ -129,7 +130,7 @@ Failure is just a type version of `mzero`.
 >                 else delayed isn (\cs -> caseOf_ (Typed (res cs)) bs def cs)
 >     Cons label args ->
 >       maybe def (\b -> b cs args) (lookup (index label) (map unMatch bs))
->     Lambda _ -> error "Data.LazyNondet.Matching.caseOf: cannot match lambda"
+>     Lambda _ -> error "CFLP.Data.Matching.caseOf: cannot match lambda"
 
 We provide operations `caseOf_` and `caseOf` (with and without a
 default alternative) for more convenient pattern matching. The untyped

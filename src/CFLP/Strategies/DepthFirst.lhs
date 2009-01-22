@@ -11,11 +11,11 @@ of the `MonadPlus` type class into a strategy for CFLP.
 >       FlexibleInstances
 >   #-}
 >
-> module Control.CFLP.Strategies.DepthFirstSearch ( dfs ) where
+> module CFLP.Strategies.DepthFirst ( dfs ) where
 >
-> import Control.CFLP
+> import CFLP
 >
-> import Control.Strategy.Trans.CallTimeChoice
+> import CFLP.Strategies.CallTimeChoice
 
 Depth-first search is implemented by the list monad. In order to make
 it a strategy, we need to make `[]` an instance of the `Enumerable`

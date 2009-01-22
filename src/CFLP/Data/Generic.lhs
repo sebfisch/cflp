@@ -10,7 +10,7 @@ the instances for classes defined in this module.
 
 > {-# LANGUAGE TypeFamilies #-}
 >
-> module Data.LazyNondet.Generic (
+> module CFLP.Data.Generic (
 >
 >   Generic(..), GenericOps, generic, primitive, consLabels,
 >
@@ -19,7 +19,8 @@ the instances for classes defined in this module.
 >  ) where
 >
 > import Data.Maybe
-> import Data.LazyNondet.Types
+>
+> import CFLP.Data.Types
 
 Here is a record with generic operations:
 

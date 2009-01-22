@@ -6,18 +6,18 @@
 >       MultiParamTypeClasses
 >   #-}
 >
-> module Data.LazyNondet.Narrowing (
+> module CFLP.Data.Narrowing (
 >
 >   unknown, Narrow(..), oneOf, (?)
 >
 > ) where
 >
-> import Data.LazyNondet.Types
->
-> import Control.Monad.Update
-> import Control.Strategy
->
 > import Data.Supply
+>
+> import CFLP.Data.Types
+>
+> import CFLP.Control.Monad.Update
+> import CFLP.Control.Strategy
 >
 > unknown :: (Monad s, Strategy c s, MonadUpdate c s, Narrow a)
 >         => ID -> Nondet c s a

@@ -8,17 +8,17 @@
 >       MultiParamTypeClasses
 >   #-}
 >
-> module Data.LazyNondet.UniqueID (
+> module CFLP.Data.UniqueID (
 >
 >   initID, withUnique
 >
 > ) where
 >
-> import Data.LazyNondet.Types
+> import Data.Supply
 >
 > import Control.Monad
 >
-> import Data.Supply
+> import CFLP.Data.Types
 
 Non-deterministic computations need a supply of unique identifiers in
 order to constrain shared choices.

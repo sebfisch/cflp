@@ -5,10 +5,10 @@ This module defines auxiliary functions for the test suite.
 
 > {-# LANGUAGE RankNTypes #-}
 >
-> module Control.CFLP.Tests where
+> module CFLP.Tests where
 >
-> import Control.CFLP
-> import Control.CFLP.Strategies.DepthFirstSearch
+> import CFLP
+> import CFLP.Strategies.DepthFirst
 >
 > import Test.HUnit
 

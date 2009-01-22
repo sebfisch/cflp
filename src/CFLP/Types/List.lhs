@@ -12,14 +12,10 @@ This module provides non-deterministic lists.
 >       TypeFamilies
 >   #-}
 >
-> module Data.LazyNondet.Types.List where
+> module CFLP.Types.List where
 >
-> import Data.LazyNondet
-> import Data.LazyNondet.Types
-> import Data.LazyNondet.Types.Bool
->
-> import Control.Monad
-> import Control.Monad.Update
+> import CFLP
+> import CFLP.Types.Bool
 >
 > import Prelude hiding ( map, foldr )
 > import qualified Prelude as P
@@ -59,29 +55,28 @@ for the element type.
 
 Some operations on lists:
 
-> null :: (MonadPlus m, Update c m m, Generic a)
->      => Nondet c m [a] -> Context c -> Nondet c m Bool
+> null :: (CFLP s, Generic a)
+>      => Data s [a] -> Context (Ctx s) -> Data s Bool
 > null xs = caseOf_ xs [pNil (const true)] false
 >
-> head :: (MonadPlus m, Update c m m, Generic a)
->      => Nondet c m [a] -> Context c -> Nondet c m a
+> head :: (CFLP s, Generic a)
+>      => Data s [a] -> Context (Ctx s) -> Data s a
 > head l = caseOf l [pCons (\_ x _ -> x)]
 >
-> tail :: (MonadPlus m, Update c m m, Generic a)
->      => Nondet c m [a] -> Context c -> Nondet c m [a]
+> tail :: (CFLP s, Generic a)
+>      => Data s [a] -> Context (Ctx s) -> Data s [a]
 > tail l = caseOf l [pCons (\_ _ xs -> xs)]
 
 Higher-order functions:
 
-> map :: (MonadPlus m, Update c m m, Generic a, Generic b)
->     => Nondet c m (a -> b) -> Nondet c m [a]
->     -> Context c -> ID -> Nondet c m [b]
+> map :: (CFLP s, Generic a, Generic b)
+>     => Data s (a -> b) -> Data s [a] -> Context (Ctx s) -> ID -> Data s [b]
 > map f l cs = withUnique $ \u ->
 >               foldr (fun (\x xs -> apply f x cs u ^: xs)) nil l cs
 >
-> foldr :: (MonadPlus m, Update c m m, Generic a)
->       => Nondet c m (a -> b -> b) -> Nondet c m b -> Nondet c m [a]
->       -> Context c -> ID -> Nondet c m b
+> foldr :: (CFLP s, Generic a)
+>       => Data s (a -> b -> b) -> Data s b -> Data s [a]
+>       -> Context (Ctx s) -> ID -> Data s b
 > foldr f y l cs = withUnique $ \u1 u2 u3 ->
 >   caseOf l
 >     [ pNil (const y)

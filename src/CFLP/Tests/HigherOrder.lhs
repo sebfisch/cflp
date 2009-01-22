@@ -4,16 +4,17 @@
 This module defines tests that show how to define higher-order
 functional-logic programs.
 
-> module Control.CFLP.Tests.HigherOrder where
+> module CFLP.Tests.HigherOrder where
 >
-> import Control.CFLP
-> import Control.CFLP.Tests
+> import CFLP
+> import CFLP.Tests
+>
 > import Test.HUnit
 >
 > import Prelude hiding ( not, null, head, map, foldr, flip, id )
 > import qualified Prelude as P
-> import Data.LazyNondet.Types.Bool
-> import Data.LazyNondet.Types.List
+> import CFLP.Types.Bool
+> import CFLP.Types.List
 >
 > tests :: Test
 > tests = "higher order" ~: test
@@ -102,7 +103,7 @@ function on its right-hand side:
 The following test makes extensive use of higher-order features by
 implementing the reverse function using `foldr`.
 
-~~~ { .Haskell }
+~~~
 rev = flip (foldr (\x f l -> f (x:l)) id) []
 ~~~
 
@@ -126,7 +127,7 @@ rev = flip (foldr (\x f l -> f (x:l)) id) []
 The following uses even more higher-order functions by implementing a
 pointfree version of the above reverse function.
 
-~~~ { .Haskell }
+~~~
 rev = flip (foldr (flip (flip ((.).(.)) (:))) id) []
 ~~~
 

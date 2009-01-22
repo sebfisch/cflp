@@ -9,7 +9,7 @@ non-deterministic data.
 >       FlexibleInstances
 >   #-}
 >
-> module Data.LazyNondet.Types (
+> module CFLP.Data.Types (
 >
 >   Context(..), ID(..), 
 >
@@ -21,7 +21,7 @@ non-deterministic data.
 >
 > import Data.Supply
 >
-> import Control.Monad.Trans.Update
+> import CFLP.Control.Monad.Update
 >
 > newtype Context cs = Context cs
 >
