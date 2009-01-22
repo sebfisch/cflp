@@ -28,6 +28,7 @@ Library
                     syb, 
                     HUnit
   Exposed-Modules:  CFLP
+                    CFLP.Strategies
                     CFLP.Strategies.CallTimeChoice
                     CFLP.Strategies.DepthFirst
                     CFLP.Tests

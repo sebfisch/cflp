@@ -18,10 +18,11 @@ other modules in this package.
 > import CFLP.Strategies.CallTimeChoice
 
 We provide a combinator `(+>)` to transform a strategy with a strategy
-transformer.
+transformer (the type is not descriptive, so better ignore it..).
 
 > infixl 5 +>
 >
+> (+>) :: (a -> b) -> (b -> c) -> d -> c
 > (s +> t) _ = t (s undefined)
 
 For convenience, we provide shortcuts for useful strategies.
