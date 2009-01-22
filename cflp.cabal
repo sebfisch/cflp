@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       2009.1.19
+Version:       2009.1.22
 Cabal-Version: >= 1.6
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -27,23 +27,24 @@ Library
                     mtl, 
                     syb, 
                     HUnit
-  Exposed-Modules:  Control.CFLP,
-                    Data.LazyNondet.Types.Bool,
-                    Data.LazyNondet.Types.List
-  Other-Modules:    Control.Monad.Update,
-                    Control.Monad.Trans.Update,
-                    Control.Constraint.Choice,
-                    Data.LazyNondet,
-                    Data.LazyNondet.Types,
-                    Data.LazyNondet.Generic,
-                    Data.LazyNondet.UniqueID,
-                    Data.LazyNondet.Matching,
-                    Data.LazyNondet.Narrowing,
-                    Data.LazyNondet.Primitive,
-                    Data.LazyNondet.HigherOrder,
-                    Control.CFLP.Tests,
-                    Control.CFLP.Tests.CallTimeChoice
-                    Control.CFLP.Tests.HigherOrder
+  Exposed-Modules:  CFLP
+                    CFLP.Strategies.CallTimeChoice
+                    CFLP.Strategies.DepthFirst
+                    CFLP.Tests
+                    CFLP.Tests.CallTimeChoice
+                    CFLP.Tests.HigherOrder
+                    CFLP.Types.Bool
+                    CFLP.Types.List
+  Other-Modules:    CFLP.Control.Monad.Update
+                    CFLP.Control.Strategy
+                    CFLP.Data
+                    CFLP.Data.Generic
+                    CFLP.Data.HigherOrder
+                    CFLP.Data.Matching
+                    CFLP.Data.Narrowing
+                    CFLP.Data.Primitive
+                    CFLP.Data.Types
+                    CFLP.Data.UniqueID
   Hs-Source-Dirs:   src
   Extensions:       GeneralizedNewtypeDeriving,
                     NoMonomorphismRestriction,
@@ -51,6 +52,7 @@ Library
                     MultiParamTypeClasses,
                     UndecidableInstances,
                     OverlappingInstances,
+                    IncoherentInstances,
                     FlexibleInstances,
                     FlexibleContexts,
                     NoMonoPatBinds,
