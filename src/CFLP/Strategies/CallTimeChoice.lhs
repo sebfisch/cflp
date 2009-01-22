@@ -21,7 +21,11 @@ evaluate to the same value in every shared occurrence.
 >       TypeFamilies
 >   #-}
 >
-> module CFLP.Strategies.CallTimeChoice where
+> module CFLP.Strategies.CallTimeChoice (
+>
+>   CTC, StoreCTC, callTimeChoice
+>
+>  ) where
 >
 > import Data.Maybe
 > import qualified Data.IntMap as IM
@@ -122,6 +126,12 @@ semantics.
 >
 > type instance Ctx (CTC s) = StoreCTC (Ctx s)
 > type instance Res (CTC s) = CTC (Res s)
+
+We provide a constructor function that allows us to hide the
+corresponding newtype constructor.
+
+> callTimeChoice :: s a -> CTC s a
+> callTimeChoice = CTC
 
 The type `CTC` is a strategy transformer for strategies that have
 acces to a choice store.

@@ -8,7 +8,7 @@ This module defines auxiliary functions for the test suite.
 > module CFLP.Tests where
 >
 > import CFLP
-> import CFLP.Strategies.DepthFirst
+> import CFLP.Strategies
 >
 > import Test.HUnit
 
