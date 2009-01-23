@@ -1,5 +1,5 @@
 Name:          cflp
-Version:       2009.1.23.1
+Version:       2009.1.23.2
 Cabal-Version: >= 1.6
 Synopsis:      Constraint Functional-Logic Programming in Haskell
 Description:   This package provides combinators for constraint
@@ -30,7 +30,9 @@ Library
   Exposed-Modules:  CFLP
                     CFLP.Strategies
                     CFLP.Strategies.CallTimeChoice
+                    CFLP.Strategies.DepthCounter
                     CFLP.Strategies.DepthFirst
+                    CFLP.Strategies.DepthLimit
                     CFLP.Tests
                     CFLP.Tests.CallTimeChoice
                     CFLP.Tests.HigherOrder
