@@ -7,13 +7,14 @@ evaluation context with a counter for the search depth.
 > {-# LANGUAGE
 >       GeneralizedNewtypeDeriving,
 >       MultiParamTypeClasses,
+>       OverlappingInstances,
 >       FlexibleInstances,
 >       TypeFamilies
 >   #-}
 >
 > module CFLP.Strategies.DepthCounter (
 >
->   DepthCounter(..), Depth, DepthCtx, depthCounter
+>   DepthCounter(..), Depth, DepthCtx, countDepth
 >
 >  ) where
 >
@@ -33,6 +34,15 @@ is given by the following type class.
 
 The first argument of `incrementDepth` will always be ignored and is
 only used to support the type checker.
+
+We define uniform liftings for depth counters over arbitrary context
+transformers.
+
+> instance (DepthCounter c, Transformer t) => DepthCounter (t c)
+>  where
+>   currentDepth = currentDepth . project
+>
+>   incrementDepth _ c = replace c (incrementDepth undefined (project c))
 
 A depth context adds a counter for the depth.
 
@@ -60,10 +70,10 @@ We define a strategy transformer for depth counting.
 > type instance Ctx (Depth s) = DepthCtx (Ctx s)
 > type instance Res (Depth s) = Depth (Res s)
 
-The operation `depthCounter` the `Depth` constructor.
+The operation `countDepth` the `Depth` constructor.
 
-> depthCounter :: s a -> Depth s a
-> depthCounter = Depth
+> countDepth :: s a -> Depth s a
+> countDepth = Depth
 
 The strategy-transformer instance increments the counter at each
 non-deterministic choice.

@@ -10,11 +10,12 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   (+>), dfs,
+>   (<+), dfs, limDFS,
 >
 >   module CFLP.Strategies.DepthFirst,
 >   module CFLP.Strategies.CallTimeChoice,
->   module CFLP.Strategies.DepthCounter
+>   module CFLP.Strategies.DepthCounter,
+>   module CFLP.Strategies.DepthLimit
 >
 >  ) where
 >
@@ -24,23 +25,32 @@ other modules in this package.
 > import CFLP.Strategies.DepthFirst
 > import CFLP.Strategies.CallTimeChoice
 > import CFLP.Strategies.DepthCounter
+> import CFLP.Strategies.DepthLimit
 
 We provide a combinator `(+>)` to transform a strategy with a strategy
 transformer (the type is not descriptive, so better ignore it..).
 
-> infixl 5 +>
+> infixr 5 <+
 >
-> (+>) :: (a -> b) -> (b -> c) -> d -> c
-> (s +> t) _ = t (s undefined)
+> (<+) :: (b -> c) -> (a -> b) -> d -> c
+> (t <+ s) _ = t (s undefined)
 
 For convenience, we provide shortcuts for useful strategies.
 
 > dfs :: c -> CTC (Monadic (UpdateT (StoreCTC c) [])) a
-> dfs = dfsWithEvalTimeChoice +> callTimeChoice
+> dfs = callTimeChoice <+ dfsWithEvalTimeChoice
+>
+> limDFS :: c -> CTC (Depth (DepthLim (Monadic
+>                     (UpdateT (StoreCTC (DepthCtx (DepthLimCtx c))) [])))) a
+> limDFS = callTimeChoice <+ countDepth <+ limitDepth <+ dfsWithEvalTimeChoice
 
 Finally, we provide instances for the type class `CFLP` that is a
 shortcut for the class constraints of CFLP computations.
 
 > instance (MonadPlus m, Enumerable m)
 >       => CFLP (CTC (Monadic (UpdateT (StoreCTC ()) m)))
+>
+> instance (MonadPlus m, Enumerable m)
+>       => CFLP (CTC (Depth (DepthLim (Monadic
+>                     (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) m)))))
 

@@ -26,7 +26,7 @@ to use errors when testing laziness.
 > assertResultsLimit :: (Generic a, Show a, Eq a)
 >                    => Maybe Int -> Computation a -> [a] -> Assertion
 > assertResultsLimit limit op expected = do
->   actual <- eval (dfs ()) op
+>   actual <- eval (limDFS ()) op
 >   maybe id take limit actual @?= expected
 
 We provide auxiliary assertions `assertResults...` that compute (a
