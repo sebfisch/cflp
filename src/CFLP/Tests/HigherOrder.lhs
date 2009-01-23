@@ -23,7 +23,7 @@ functional-logic programs.
 >   , "apply non-deterministic choice" ~: applyChoice
 >   , "call-time choice" ~: callTimeChoice
 >   , "map shared unknowns" ~: mapSharedUnknowns
->   , "memeber with fold" ~: memberWithFold
+>   , "member with fold" ~: memberWithFold
 >   , "overApplication" ~: overApplication
 >   , "reverse with foldr" ~: reverseWithFoldr
 >   , "pointfree reverse" ~: pointfreeReverse

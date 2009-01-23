@@ -10,7 +10,7 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   (<+), dfs, limDFS,
+>   dfs, limDFS,
 >
 >   module CFLP.Strategies.DepthFirst,
 >   module CFLP.Strategies.CallTimeChoice,
@@ -27,22 +27,15 @@ other modules in this package.
 > import CFLP.Strategies.DepthCounter
 > import CFLP.Strategies.DepthLimit
 
-We provide a combinator `(+>)` to transform a strategy with a strategy
-transformer (the type is not descriptive, so better ignore it..).
+We provide shortcuts for useful strategies.
 
-> infixr 5 <+
+> dfs :: CTC (Monadic (UpdateT (StoreCTC ()) [])) (StoreCTC ())
+> dfs = callTimeChoice dfsWithEvalTimeChoice
 >
-> (<+) :: (b -> c) -> (a -> b) -> d -> c
-> (t <+ s) _ = t (s undefined)
-
-For convenience, we provide shortcuts for useful strategies.
-
-> dfs :: c -> CTC (Monadic (UpdateT (StoreCTC c) [])) a
-> dfs = callTimeChoice <+ dfsWithEvalTimeChoice
->
-> limDFS :: c -> CTC (Depth (DepthLim (Monadic
->                     (UpdateT (StoreCTC (DepthCtx (DepthLimCtx c))) [])))) a
-> limDFS = callTimeChoice <+ countDepth <+ limitDepth <+ dfsWithEvalTimeChoice
+> limDFS :: Int -> CTC (Depth (DepthLim (Monadic
+>                       (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                       (StoreCTC (DepthCtx (DepthLimCtx ())))
+> limDFS l = callTimeChoice.countDepth.limitDepth l$dfsWithEvalTimeChoice
 
 Finally, we provide instances for the type class `CFLP` that is a
 shortcut for the class constraints of CFLP computations.

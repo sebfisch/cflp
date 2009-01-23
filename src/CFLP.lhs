@@ -28,7 +28,10 @@ functional-logic programming in Haskell.
 > import Control.Monad.State
 >
 > import CFLP.Data
+> import CFLP.Data.Types
+>
 > import CFLP.Control.Monad.Update
+>
 > import CFLP.Control.Strategy
 
 The type class `CFLP` amalgamates all class constraints on constraint
@@ -65,12 +68,12 @@ We provide
 
 > eval, evalPartial
 >   :: (Monad s, CFLP s, Generic a) => s (Ctx s) -> Computation a -> IO [a]
-> eval        s = liftM (liftM primitive) . evaluate s groundNormalForm
-> evalPartial s = liftM (liftM primitive) . evaluate s partialNormalForm
+> eval        s = liftM (liftM primitive) . evaluate s (groundNormalForm s)
+> evalPartial s = liftM (liftM primitive) . evaluate s (partialNormalForm s)
 >
 > evalPrint :: (Monad s, CFLP s, Generic a)
 >           => s (Ctx s) -> Computation a -> IO ()
-> evalPrint s op = evaluate s partialNormalForm op >>= printSols
+> evalPrint s op = evaluate s (partialNormalForm s) op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
@@ -89,10 +92,10 @@ constraint functional-logic computation according to a given strategy.
 
 > evaluate :: CFLP s
 >          => s (Ctx s)
->          -> (Nondet (Ctx s) s a -> Context (Ctx s) -> Res s b)
+>          -> (Nondet (Ctx s) s a -> Res s b)
 >          -> Computation a
 >          -> IO [b]
 > evaluate s evalNondet op = do
 >   i <- initID
 >   return $ enumeration $
->     evalNondet (op (Context (emptyContext s)) i) $ Context (emptyContext s)
+>     evalNondet (Typed (s >>= untyped . flip op i . Context))

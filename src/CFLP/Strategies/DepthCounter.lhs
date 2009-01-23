@@ -70,11 +70,6 @@ We define a strategy transformer for depth counting.
 > type instance Ctx (Depth s) = DepthCtx (Ctx s)
 > type instance Res (Depth s) = Depth (Res s)
 
-The operation `countDepth` the `Depth` constructor.
-
-> countDepth :: s a -> Depth s a
-> countDepth = Depth
-
 The strategy-transformer instance increments the counter at each
 non-deterministic choice.
 
@@ -83,6 +78,9 @@ non-deterministic choice.
 >   liftStrategy _ = Depth
 >   baseStrategy _ = fromDepth
 >
->   extendContext _ = DepthCtx 0
->
 >   extendChoices c _ = map (update (return . incrementDepth c)>>)
+
+The operation `countDepth` adds a depth counter to a strategy.
+
+> countDepth :: Monad s => s c -> Depth s (DepthCtx c)
+> countDepth = Depth . liftM (DepthCtx 0)

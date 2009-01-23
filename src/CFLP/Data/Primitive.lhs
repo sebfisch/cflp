@@ -1,6 +1,10 @@
 % Primitive Generic Functions on Lazy Non-Deterministic Data
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
+> {-# LANGUAGE
+>       FlexibleContexts
+>   #-}
+>
 > module CFLP.Data.Primitive (
 >
 >   nondet, groundNormalForm, partialNormalForm,
@@ -29,7 +33,7 @@ We provide a generic operation `nondet` to translate instances of
 > nf2hnf (Var _) = error "Primitive.nf2hnf: cannot convert logic variable"
 > nf2hnf (Data label args) = Cons label (map (return . nf2hnf) args)
 > nf2hnf (Fun f) = Lambda (\x _ _ -> liftM (nf2hnf . f) $ gnf x)
->  where gnf x = groundNormalForm (Typed x) $
+>  where gnf x = flip groundNormalForm (Typed x) $ return $ 
 >                  error "Primitive.nf2hnf: primitive function uses context"
 
 The `...NormalForm` functions evaluate a non-deterministic value and
@@ -39,12 +43,19 @@ representation. Partial normal forms may contain unbound logic
 variables while ground normal forms are data terms.
 
 > groundNormalForm :: (Monad s, Monad m, Update c s m)
->                  => Nondet c s a -> Context c -> m NormalForm
-> groundNormalForm x (Context cs) = evalStateT (gnf (untyped x)) cs
+>                  => s c -> Nondet c s a -> m NormalForm
+> groundNormalForm c x
+>   = evalStateT (updateState c) (undefined `asContextOf` c) >>=
+>     evalStateT (gnf (untyped x))
 >
 > partialNormalForm :: (Monad s, Strategy c s, Monad m, Update c s m)
->                   => Nondet c s a -> Context c -> m NormalForm
-> partialNormalForm x (Context cs) = evalStateT (pnf (untyped x)) cs
+>                   => s c -> Nondet c s a -> m NormalForm
+> partialNormalForm c x
+>   = evalStateT (updateState c) (undefined `asContextOf` c) >>=
+>     evalStateT (pnf (untyped x))
+>
+> asContextOf :: c -> s c -> c
+> asContextOf = const
 
 To compute ground normal forms, we ignore free variables and narrow
 them to ground terms. To compute partial normal forms, we do not

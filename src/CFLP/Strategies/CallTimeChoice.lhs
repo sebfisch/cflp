@@ -126,12 +126,6 @@ semantics.
 > type instance Ctx (CTC s) = StoreCTC (Ctx s)
 > type instance Res (CTC s) = CTC (Res s)
 
-We provide a constructor function that allows us to hide the
-corresponding newtype constructor.
-
-> callTimeChoice :: s a -> CTC s a
-> callTimeChoice = CTC
-
 The type `CTC` is a strategy transformer for strategies that have
 acces to a choice store.
 
@@ -140,9 +134,15 @@ acces to a choice store.
 >   liftStrategy _ = CTC
 >   baseStrategy _ = fromCTC
 >
->   extendContext _ = StoreCTC noChoices
 >   extendChoices   = labeledChoices
 >
 >   alterNarrowed c n isn
 >     | isJust (lookupChoice n c) = return True
 >     | otherwise = isn
+
+We provide a strategy transformer function that is used to add
+call-time choice to arbitrary strategies.
+
+> callTimeChoice :: Monad s => s c -> CTC s (StoreCTC c)
+> callTimeChoice = CTC . liftM (StoreCTC noChoices)
+

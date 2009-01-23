@@ -43,12 +43,9 @@ transformers.
 >
 >   resetDepthLimit _ l c = replace c (resetDepthLimit undefined l (project c))
 
-The default limit is 100, but you can use the operation
-`setDepthLimit` in computations to change it.
+The operation `setDepthLimit` is used in computations to change the
+depth limit.
 
-> defaultLimit :: Int
-> defaultLimit = 100
->
 > setDepthLimit :: (Monad s, DepthLimiter c, MonadUpdate c s)
 >               => c -> Int -> s ()
 > setDepthLimit c l = update (return . resetDepthLimit c l)
@@ -80,11 +77,6 @@ We define a strategy transformer for depth limiting.
 > type instance Ctx (DepthLim s) = DepthLimCtx (Ctx s)
 > type instance Res (DepthLim s) = DepthLim (Res s)
 
-The operation `depthCounter` the `Depth` constructor.
-
-> limitDepth :: s a -> DepthLim s a
-> limitDepth = DepthLim
-
 The strategy-transformer instance increments the counter at each
 non-deterministic choice and prunes the choices if the limit is
 exceeded.
@@ -94,9 +86,13 @@ exceeded.
 >   liftStrategy _ = DepthLim
 >   baseStrategy _ = fromDepthLim
 >
->   extendContext _ = DepthLimCtx defaultLimit
->
 >   extendChoices c _ xs
 >     | currentDepth c < depthLimit c
 >       = map (update (return . incrementDepth c)>>) xs
 >     | otherwise = []
+
+The operation `limitDepth` adds a depth limit to a strategy.
+
+> limitDepth :: Monad s => Int -> s c -> DepthLim s (DepthLimCtx c)
+> limitDepth l = DepthLim . liftM (DepthLimCtx l)
+

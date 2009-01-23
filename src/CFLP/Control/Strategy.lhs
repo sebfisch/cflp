@@ -69,13 +69,6 @@ value of type `a` where the strategy `s` is used for evaluation.
 
 Strategies provide the following operations:
 
->   emptyContext :: s c -> Ctx s
-
-yields an empty context of the associated type `Ctx s`. The argument
-of type `s c` is sometimes necessary to satisfy the type checker. It
-must always be safe to pass undefined, i.e., the argument must be
-ignored.
-
 >   choose :: c -> Int -> [s a] -> s a
 
 is used to cconstruct non-deterministic choices of computations. We
@@ -113,11 +106,6 @@ straigh-forward.
 > instance MonadPlus m => Strategy c (Monadic m) where
 
 The operation
-
->   emptyContext _ = ()
-
-yields `()` because stores are ignored by (untransformed) monadic
-strategies.
 
 >   choose _ _ [x] = x
 >   choose _ _ xs  = foldr mplus mzero xs
@@ -192,11 +180,6 @@ takes a computation that uses the transformed strategy and yields one
 that uses the base strategy. The first parameter is used to support
 type checking and must be ignored.
 
->   extendContext :: t s c -> Ctx s -> Ctx (t s)
-
-may extend the evaluation context of the base strategy. Again, the
-first argument must be ignored by instantiations of `StrategyT`.
-
 >   extendChoices :: (Monad s, MonadUpdate c s)
 >                 => c -> Int -> [t s a] -> [t s a]
 >   extendChoices _ _ = id
@@ -221,14 +204,6 @@ monad, then the transformed strategy is again a strategy.
 >       => Strategy c (t s)
 >  where
 
-The operation `emptyContext` calls the corresponding operation of the
-base strategy and extends the result accoring to the transformer.
-
->   emptyContext c = extendContext c (emptyContext (undefined `forBaseOf` c))
-
-Here, we give a hint to the type checker using the type-constrained
-`const` function `forBaseOf` (defined below).
-
 The operation `choose` extends the choices according to the
 transformer and calls the `choose` operation of the base strategy with
 the resulting choices.
@@ -238,17 +213,10 @@ the resulting choices.
 >              . map (baseStrategy c)
 >              . extendChoices c n
 
-Finally, the predicate `isNarrowed` is altered according the strategy
+The predicate `isNarrowed` is altered according to the strategy
 transformer.
 
 >   isNarrowed c n = alterNarrowed c n (liftStrategy c (isNarrowed c n))
-
-The function `forBaseOf` is a `const` function with a specialised type
-that supports the type checker in finding the corresponding operation
-`emptyContext` for the base strategy.
-
-> forBaseOf :: s a -> t s a -> s a
-> forBaseOf = const
 
 
 Uniform Liftings

@@ -26,6 +26,6 @@ We define depth-first search strategies for evaluation-time choice
 semantics. In order to get call-time choice, this needs to be
 transformed with the call-time choice transformer.
 
-> dfsWithEvalTimeChoice :: c -> Monadic (UpdateT c []) a
-> dfsWithEvalTimeChoice _ = Monadic undefined
+> dfsWithEvalTimeChoice :: Monadic (UpdateT c []) ()
+> dfsWithEvalTimeChoice = Monadic (return ())
 
