@@ -32,7 +32,6 @@ evaluate to the same value in every shared occurrence.
 >
 > import Control.Monad
 >
-> import CFLP
 > import CFLP.Control.Monad.Update
 > import CFLP.Control.Strategy
 
@@ -147,10 +146,3 @@ acces to a choice store.
 >   alterNarrowed c n isn
 >     | isJust (lookupChoice n c) = return True
 >     | otherwise = isn
-
-Finally, we provide an instance for the type class `CFLP` that is a
-shortcut for the class constraints of CFLP computations.
-
-> instance (MonadPlus m, Enumerable m)
->       => CFLP (CTC (Monadic (UpdateT (StoreCTC ()) m)))
-
