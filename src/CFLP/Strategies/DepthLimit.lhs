@@ -1,4 +1,4 @@
-% Depth Limiting for Non-Deterministic Computations.
+% Depth Limiting for Non-Deterministic Computations
 % Sebastian Fischer (sebf@informatik.uni-kiel.de)
 
 This module provides a strategy transformer that extends the
