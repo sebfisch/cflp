@@ -5,6 +5,7 @@
 *.o
 dist/*
 src/*.html
+src/generate-module-index.*
 *.lhs.html
 *.lhs.pdf
 update-webpage.sh

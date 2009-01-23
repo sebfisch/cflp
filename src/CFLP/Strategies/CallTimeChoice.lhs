@@ -149,7 +149,8 @@ acces to a choice store.
 >     | otherwise = isn
 
 Finally, we provide an instance for the type class `CFLP` that is a
-shortcut for the class constraints od CFLP computations.
+shortcut for the class constraints of CFLP computations.
 
 > instance (MonadPlus m, Enumerable m)
 >       => CFLP (CTC (Monadic (UpdateT (StoreCTC ()) m)))
+
