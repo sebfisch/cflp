@@ -10,9 +10,8 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   dfs, limDFS, iterDFS,
+>   dfs, limDFS, iterDFS, diag,
 >
->   module CFLP.Strategies.DepthFirst,
 >   module CFLP.Strategies.CallTimeChoice,
 >   module CFLP.Strategies.DepthCounter,
 >   module CFLP.Strategies.DepthLimit
@@ -20,9 +19,9 @@ other modules in this package.
 >  ) where
 >
 > import Control.Monad
+> import Control.Monad.Omega
 >
 > import CFLP
-> import CFLP.Strategies.DepthFirst
 > import CFLP.Strategies.CallTimeChoice
 > import CFLP.Strategies.DepthCounter
 > import CFLP.Strategies.DepthLimit
@@ -31,8 +30,10 @@ We provide shortcuts for useful strategies.
 
 depth-first search:
 
+> instance Enumerable [] where enumeration = id
+>
 > dfs :: [CTC (Monadic (UpdateT (StoreCTC ()) [])) (StoreCTC ())]
-> dfs = [callTimeChoice dfsWithEvalTimeChoice]
+> dfs = [callTimeChoice monadic]
 
 depth-first search with limited depth:
 
@@ -46,7 +47,7 @@ depth-first search with limited depth:
 >                  (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
 >                (StoreCTC (DepthCtx (DepthLimCtx ())))
 > limitedDepthFirstSearch l
->   = callTimeChoice.countDepth.limitDepth l$dfsWithEvalTimeChoice
+>   = callTimeChoice . countDepth . limitDepth l $ monadic
 
 iterative deepening depth-first search:
 
@@ -54,6 +55,13 @@ iterative deepening depth-first search:
 >                   (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
 >                 (StoreCTC (DepthCtx (DepthLimCtx ())))]
 > iterDFS = map limitedDepthFirstSearch [0..]
+
+Fair diagonalization by Luke Palmer:
+
+> instance Enumerable Omega where enumeration = runOmega
+>
+> diag :: [CTC (Monadic (UpdateT (StoreCTC ()) Omega)) (StoreCTC ())]
+> diag = [callTimeChoice monadic]
 
 Finally, we provide instances for the type class `CFLP` that is a
 shortcut for the class constraints of CFLP computations.

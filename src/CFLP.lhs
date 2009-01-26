@@ -19,7 +19,7 @@ functional-logic programming in Haskell.
 >
 >   eval, evalPartial, evalPrint,
 >
->   Monadic(..), UpdateT,
+>   Monadic, monadic, UpdateT,
 >
 >   module CFLP.Data
 >
@@ -44,6 +44,9 @@ functional-logic computations.
 >                          , MonadPlus (Res s)
 >                          , Enumerable (Res s))
 >    => CFLP s
+>
+> monadic :: Monad m => Monadic (UpdateT c m) ()
+> monadic = Monadic (return ())
 >
 > instance (MonadPlus m, Enumerable m) => CFLP (Monadic (UpdateT () m))
 
