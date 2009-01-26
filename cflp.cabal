@@ -22,7 +22,7 @@ Extra-Source-Files: README, INSTALL, Makefile, configure, Test.lhs
 
 Library
   Build-Depends:    base >= 4, mtl, syb, containers,
-                    control-monad-omega, logict,
+                    control-monad-omega, logict, level-monad,
                     random, MonadRandom,
                     value-supply,
                     HUnit
