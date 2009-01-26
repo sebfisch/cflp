@@ -25,6 +25,7 @@ Library
                     containers, 
                     value-supply,
                     control-monad-omega,
+                    logict,
                     mtl, 
                     syb, 
                     HUnit

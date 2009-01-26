@@ -20,6 +20,7 @@ other modules in this package.
 >
 > import Control.Monad
 > import Control.Monad.Omega
+> import Control.Monad.Logic
 >
 > import CFLP
 > import CFLP.Strategies.CallTimeChoice
@@ -30,21 +31,23 @@ We provide shortcuts for useful strategies.
 
 depth-first search:
 
-> instance Enumerable [] where enumeration = id
+> instance Enumerable []    where enumeration = id
+> instance Enumerable Logic where enumeration = observeAll
 >
-> dfs :: [CTC (Monadic (UpdateT (StoreCTC ()) [])) (StoreCTC ())]
+> dfs :: [CTC (Monadic (UpdateT (StoreCTC ()) Logic)) (StoreCTC ())]
 > dfs = [callTimeChoice monadic]
 
 depth-first search with limited depth:
 
-> limDFS :: Int -> [CTC (Depth (DepthLim (Monadic
->                         (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
->                       (StoreCTC (DepthCtx (DepthLimCtx ())))]
+> limDFS :: Int
+>        -> [CTC (Depth (DepthLim (Monadic
+>                 (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) Logic))))
+>                (StoreCTC (DepthCtx (DepthLimCtx ())))]
 > limDFS l = [limitedDepthFirstSearch l]
 >
 > limitedDepthFirstSearch
 >  :: Int -> CTC (Depth (DepthLim (Monadic
->                  (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                  (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) Logic))))
 >                (StoreCTC (DepthCtx (DepthLimCtx ())))
 > limitedDepthFirstSearch l
 >   = callTimeChoice . countDepth . limitDepth l $ monadic
@@ -52,7 +55,7 @@ depth-first search with limited depth:
 iterative deepening depth-first search:
 
 > iterDFS :: [CTC (Depth (DepthLim (Monadic
->                   (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                   (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) Logic))))
 >                 (StoreCTC (DepthCtx (DepthLimCtx ())))]
 > iterDFS = map limitedDepthFirstSearch [0..]
 
