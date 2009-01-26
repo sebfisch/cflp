@@ -10,7 +10,7 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   dfs, limDFS,
+>   dfs, limDFS, iterDFS,
 >
 >   module CFLP.Strategies.DepthFirst,
 >   module CFLP.Strategies.CallTimeChoice,
@@ -29,13 +29,31 @@ other modules in this package.
 
 We provide shortcuts for useful strategies.
 
-> dfs :: CTC (Monadic (UpdateT (StoreCTC ()) [])) (StoreCTC ())
-> dfs = callTimeChoice dfsWithEvalTimeChoice
+depth-first search:
+
+> dfs :: [CTC (Monadic (UpdateT (StoreCTC ()) [])) (StoreCTC ())]
+> dfs = [callTimeChoice dfsWithEvalTimeChoice]
+
+depth-first search with limited depth:
+
+> limDFS :: Int -> [CTC (Depth (DepthLim (Monadic
+>                         (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                       (StoreCTC (DepthCtx (DepthLimCtx ())))]
+> limDFS l = [limitedDepthFirstSearch l]
 >
-> limDFS :: Int -> CTC (Depth (DepthLim (Monadic
->                       (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
->                       (StoreCTC (DepthCtx (DepthLimCtx ())))
-> limDFS l = callTimeChoice.countDepth.limitDepth l$dfsWithEvalTimeChoice
+> limitedDepthFirstSearch
+>  :: Int -> CTC (Depth (DepthLim (Monadic
+>                  (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                (StoreCTC (DepthCtx (DepthLimCtx ())))
+> limitedDepthFirstSearch l
+>   = callTimeChoice.countDepth.limitDepth l$dfsWithEvalTimeChoice
+
+iterative deepening depth-first search:
+
+> iterDFS :: [CTC (Depth (DepthLim (Monadic
+>                   (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) []))))
+>                 (StoreCTC (DepthCtx (DepthLimCtx ())))]
+> iterDFS = map limitedDepthFirstSearch [0..]
 
 Finally, we provide instances for the type class `CFLP` that is a
 shortcut for the class constraints of CFLP computations.

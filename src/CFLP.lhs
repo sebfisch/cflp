@@ -67,13 +67,13 @@ We provide
     solutions of a constraint functional-logic computation.
 
 > eval, evalPartial
->   :: (Monad s, CFLP s, Generic a) => s (Ctx s) -> Computation a -> IO [a]
-> eval        s = liftM (liftM primitive) . evaluate s (groundNormalForm s)
-> evalPartial s = liftM (liftM primitive) . evaluate s (partialNormalForm s)
+>   :: (Monad s, CFLP s, Generic a) => [s (Ctx s)] -> Computation a -> IO [a]
+> eval        s = liftM (liftM primitive) . evaluate s groundNormalForm
+> evalPartial s = liftM (liftM primitive) . evaluate s partialNormalForm
 >
 > evalPrint :: (Monad s, CFLP s, Generic a)
->           => s (Ctx s) -> Computation a -> IO ()
-> evalPrint s op = evaluate s (partialNormalForm s) op >>= printSols
+>           => [s (Ctx s)] -> Computation a -> IO ()
+> evalPrint s op = evaluate s partialNormalForm op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
 > printSols []     = putStrLn "No more solutions."
@@ -91,11 +91,11 @@ The `evaluate` function enumerates the non-deterministic solutions of a
 constraint functional-logic computation according to a given strategy.
 
 > evaluate :: CFLP s
->          => s (Ctx s)
->          -> (Nondet (Ctx s) s a -> Res s b)
+>          => [s (Ctx s)]
+>          -> (s (Ctx s) -> Nondet (Ctx s) s a -> Res s b)
 >          -> Computation a
 >          -> IO [b]
 > evaluate s evalNondet op = do
 >   i <- initID
->   return $ enumeration $
->     evalNondet (Typed (s >>= untyped . flip op i . Context))
+>   return $ concatMap enumeration $
+>     map (\c -> evalNondet c (Typed (c >>= untyped . flip op i . Context))) s
