@@ -21,19 +21,17 @@ Stability:     alpha
 Extra-Source-Files: README, INSTALL, Makefile, configure, Test.lhs
 
 Library
-  Build-Depends:    base >= 4, 
-                    containers, 
+  Build-Depends:    base >= 4, mtl, syb, containers,
+                    control-monad-omega, logict,
+                    random, MonadRandom,
                     value-supply,
-                    control-monad-omega,
-                    logict,
-                    mtl, 
-                    syb, 
                     HUnit
   Exposed-Modules:  CFLP
                     CFLP.Strategies
                     CFLP.Strategies.CallTimeChoice
                     CFLP.Strategies.DepthCounter
                     CFLP.Strategies.DepthLimit
+                    CFLP.Strategies.Random
                     CFLP.Tests
                     CFLP.Tests.CallTimeChoice
                     CFLP.Tests.HigherOrder

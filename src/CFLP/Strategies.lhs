@@ -10,15 +10,10 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   dfs, limDFS, iterDFS, diag,
->
->   module CFLP.Strategies.CallTimeChoice,
->   module CFLP.Strategies.DepthCounter,
->   module CFLP.Strategies.DepthLimit
+>   dfs, limDFS, iterDFS, diag, rndDFS
 >
 >  ) where
 >
-> import Control.Monad
 > import Control.Monad.Omega
 > import Control.Monad.Logic
 >
@@ -26,6 +21,7 @@ other modules in this package.
 > import CFLP.Strategies.CallTimeChoice
 > import CFLP.Strategies.DepthCounter
 > import CFLP.Strategies.DepthLimit
+> import CFLP.Strategies.Random
 
 We provide shortcuts for useful strategies.
 
@@ -66,6 +62,14 @@ Fair diagonalization by Luke Palmer:
 > diag :: [CTC (Monadic (UpdateT (StoreCTC ()) Omega)) (StoreCTC ())]
 > diag = [callTimeChoice monadic]
 
+We combine randomization with depth-first search. Here, it is crucial
+to use the call-time choice transformer *before* the randomizer
+shuffles choices.
+
+> rndDFS :: [CTC (Rnd (Monadic (UpdateT (StoreCTC (RndCtx ())) Logic)))
+>                (StoreCTC (RndCtx ()))]
+> rndDFS = [callTimeChoice . randomise $ monadic]
+
 Finally, we provide instances for the type class `CFLP` that is a
 shortcut for the class constraints of CFLP computations.
 
@@ -75,4 +79,7 @@ shortcut for the class constraints of CFLP computations.
 > instance (MonadPlus m, Enumerable m)
 >       => CFLP (CTC (Depth (DepthLim (Monadic
 >                     (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) m)))))
+>
+> instance (MonadPlus m, Enumerable m)
+>       => CFLP (CTC (Rnd (Monadic (UpdateT (StoreCTC (RndCtx ())) m))))
 
