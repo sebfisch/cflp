@@ -10,12 +10,13 @@ other modules in this package.
 >
 > module CFLP.Strategies (
 >
->   dfs, limDFS, iterDFS, diag, rndDFS
+>   dfs, limDFS, iterDFS, bfs, diag, rndDFS
 >
 >  ) where
 >
-> import Control.Monad.Omega
 > import Control.Monad.Logic
+> import Control.Monad.Omega
+> import Control.Monad.Levels
 >
 > import CFLP
 > import CFLP.Strategies.CallTimeChoice
@@ -29,7 +30,7 @@ depth-first search:
 
 > instance Enumerable []    where enumeration = id
 > instance Enumerable Logic where enumeration = observeAll
->
+> -- using `Logic` instead of `[]` destroys sharing. Investigate.
 > dfs :: [CTC (Monadic (UpdateT (StoreCTC ()) Logic)) (StoreCTC ())]
 > dfs = [callTimeChoice monadic]
 
@@ -54,6 +55,13 @@ iterative deepening depth-first search:
 >                   (UpdateT (StoreCTC (DepthCtx (DepthLimCtx ()))) Logic))))
 >                 (StoreCTC (DepthCtx (DepthLimCtx ())))]
 > iterDFS = map limitedDepthFirstSearch [0..]
+
+breadth-first search:
+
+> instance Enumerable Levels where enumeration = breadthFirstSearch
+>
+> bfs :: [CTC (Monadic (UpdateT (StoreCTC ()) Levels)) (StoreCTC ())]
+> bfs = [callTimeChoice monadic]
 
 Fair diagonalization by Luke Palmer:
 
