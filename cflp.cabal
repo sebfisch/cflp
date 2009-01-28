@@ -8,7 +8,7 @@ Description:   This package provides combinators for constraint
                compiling programs written in an FLP language like Curry 
                or Toy. Another application of FLP is demand driven 
                test-case generation.
-Category:      Control, Monads
+Category:      Control
 License:       BSD3
 License-File:  LICENSE
 Author:        Sebastian Fischer
