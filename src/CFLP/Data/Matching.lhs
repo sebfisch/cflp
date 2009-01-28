@@ -22,14 +22,6 @@
 > import CFLP.Data.Generic
 >
 > import CFLP.Control.Monad.Update
->
-> withHNF :: (Monad m, Update cs m m)
->         => Nondet cs m a
->         -> (HeadNormalForm cs m -> Context cs -> Nondet cs m b)
->         -> Context cs -> Nondet cs m b
-> withHNF x b (Context cs) = Typed (do
->   (hnf,cs') <- runStateT (updateState (untyped x)) cs
->   untyped (b hnf (Context cs')))
 
 The `withHNF` operation can be used for pattern matching and solves
 constraints associated to the head constructor of a non-deterministic
@@ -38,13 +30,13 @@ branch function. Collected constraints are kept attached to the
 computed value by using an appropriate instance of `Update` that does
 not eliminate them.
 
-> class WithUntyped a
->  where
->   type C a
->   type M a :: * -> *
->   type T a
->
->   withUntyped :: a -> [Untyped (C a) (M a)] -> Nondet (C a) (M a) (T a)
+> withHNF :: (Monad m, Update cs m m)
+>         => Nondet cs m a
+>         -> (HeadNormalForm cs m -> Context cs -> Nondet cs m b)
+>         -> Context cs -> Nondet cs m b
+> withHNF x b (Context cs) = Typed (do
+>   (hnf,cs') <- runStateT (updateState (untyped x)) cs
+>   untyped (b hnf (Context cs')))
 
 We repeat the definition of the type class `With` because the current
 implementation of GHC does not allow equality constraints in
@@ -59,6 +51,14 @@ follows:
 So it is just a copy of the type class `With` where the argument type
 is specialized to use the same monad.
 
+> class WithUntyped a
+>  where
+>   type C a
+>   type M a :: * -> *
+>   type T a
+>
+>   withUntyped :: a -> [Untyped (C a) (M a)] -> Nondet (C a) (M a) (T a)
+>
 > instance WithUntyped (Nondet cs m a)
 >  where
 >   type C (Nondet cs m a) = cs
@@ -99,18 +99,26 @@ function to typed versions of these values.
 >   = Match { unMatch :: (Int, Context cs -> Branch cs m b) }
 >
 > type Branch cs m a = [Untyped cs m] -> Nondet cs m a
->
-> match :: WithUntyped a
->       => Int -> (Context (C a) -> a) -> Match t (C a) (M a) (T a)
-> match n alt = Match (n, withUntyped . alt)
 
 The operation `match` is used to build destructor functions for
 non-deterministic values that can be used with `caseOf`.
 
+> match :: WithUntyped a
+>       => Int -> (Context (C a) -> a) -> Match t (C a) (M a) (T a)
+> match n alt = Match (n, withUntyped . alt)
+
+Failure is just a type version of `mzero`.
+
 > failure :: MonadPlus m => Nondet cs m a
 > failure = Typed mzero
 
-Failure is just a type version of `mzero`.
+We provide operations `caseOf_` and `caseOf` (with and without a
+default alternative) for more convenient pattern matching. The untyped
+values are hidden so functional-logic code does not need to match on
+the `Cons` constructor explicitly. However, using this combinator
+causes an additional slowdown because of the list lookup. It remains
+to be checked how big the slowdown of using `caseOf` is compared to
+using `withHNF` directly.
 
 > caseOf :: (MonadPlus m, Update cs m m)
 >        => Nondet cs m a -> [Match a cs m b] -> Context cs -> Nondet cs m b
@@ -123,7 +131,7 @@ Failure is just a type version of `mzero`.
 >   withHNF x $ \hnf cs ->
 >   case hnf of
 >     FreeVar _ y -> caseOf_ (Typed y) bs def cs
->     Delayed isn res -> Typed . join . liftM untyped $ do
+>     Delayed isn res -> joinNondet $ do
 >       narrowed <- isn cs
 >       return $ if narrowed
 >                 then caseOf_ (Typed (res cs)) bs def cs
@@ -131,14 +139,6 @@ Failure is just a type version of `mzero`.
 >     Cons label args ->
 >       maybe def (\b -> b cs args) (lookup (index label) (map unMatch bs))
 >     Lambda _ -> error "CFLP.Data.Matching.caseOf: cannot match lambda"
-
-We provide operations `caseOf_` and `caseOf` (with and without a
-default alternative) for more convenient pattern matching. The untyped
-values are hidden so functional-logic code does not need to match on
-the `Cons` constructor explicitly. However, using this combinator
-causes an additional slowdown because of the list lookup. It remains
-to be checked how big the slowdown of using `caseOf` is compared to
-using `withHNF` directly.
 
 
 Defining Constructor and Destructor Functions

@@ -8,9 +8,10 @@ package.
 >
 > import CFLP.Tests.CallTimeChoice as CTC
 > import CFLP.Tests.HigherOrder as HO
+> import CFLP.Tests.Boolean as B
 >
 > main :: IO ()
 > main = do
->  runTestTT $ test [CTC.tests,HO.tests]
+>  runTestTT $ test [CTC.tests,HO.tests,B.tests]
 >  return ()
 

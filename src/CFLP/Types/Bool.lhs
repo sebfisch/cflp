@@ -31,7 +31,7 @@ defined in the module `CFLP.Data.Generic`.
 In order to be able to use logic variables of boolean type, we make it
 an instance of the type class `Narrow`.
 
-> instance Narrow Bool
+> instance Narrow c Bool
 >  where
 >   narrow = oneOf [false,true]
 

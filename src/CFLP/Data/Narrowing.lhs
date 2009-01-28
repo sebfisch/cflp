@@ -3,16 +3,21 @@
 
 > {-# LANGUAGE
 >       FlexibleContexts,
+>       FlexibleInstances,
 >       MultiParamTypeClasses
 >   #-}
 >
 > module CFLP.Data.Narrowing (
 >
->   unknown, Narrow(..), oneOf, (?)
+>   unknown, Narrow(..), -- Binding(..), narrowVar, 
+>
+>   (?), oneOf
 >
 > ) where
 >
 > import Data.Supply
+>
+> import Control.Monad
 >
 > import CFLP.Data.Types
 >
@@ -22,7 +27,7 @@
 The application of `unknown` to a constraint store and a unique
 identifier represents a logic variable of an arbitrary type. 
 
-> unknown :: (Monad s, Strategy c s, MonadUpdate c s, Narrow a)
+> unknown :: (Monad s, Strategy c s, MonadUpdate c s, Update c s s, Narrow c a)
 >         => ID -> Nondet c s a
 > unknown u = freeVar u (delayed (isNarrowedID u) (`narrow`u))
 >
@@ -36,9 +41,9 @@ that supports choices. Usually, `narrow` will be implemented as a
 non-deterministic generator using `oneOf`, but for specific types
 different strategies may be implemented.
 
-> class Narrow a
+> class Narrow c a
 >  where
->   narrow :: (Monad s, Strategy c s, MonadUpdate c s)
+>   narrow :: (Monad s, Strategy c s, MonadUpdate c s, Update c s s)
 >          => Context c -> ID -> Nondet c s a
 
 The operator `(?)` wraps the combinator `oneOf` to generate a delayed
@@ -59,3 +64,60 @@ the given list.
 >       => [Nondet c s a] -> Context c -> ID -> Nondet c s a
 > oneOf xs (Context c) (ID us)
 >   = Typed (choose c (supplyValue us) (map untyped xs))
+
+
+Constraint Solving
+------------------
+
+We provide a type class for constraint stores that support branching
+on variables.
+
+ class Solver c
+  where
+   branchOn :: MonadPlus m => c -> Int -> c -> m c
+
+The first argument of `branchOn` is only used to support the type
+checker. It must be ignored when instantiating the `Solver` class.
+
+The type class `Binding` defines a function that looks up a variable
+binding in a constraint store.
+
+ class Binding c a
+  where
+   binding :: (Monad m, Update cs m m) => c -> Int -> Maybe (Nondet cs m a)
+
+The result of the `binding` function is optional in order to allow for
+composing results when transforming evaluation contexts.
+
+The base instance for the unit context always returns `Nothing`:
+
+ instance Binding () a where binding _ _ = Nothing
+
+We provide a default implementation of the `narrow` function for
+constraint solvers that support variable lookups. This function can be
+used to define the `Narrow` instance for types that are handled by
+constraint solvers.
+
+ narrowVar :: (Monad s, Strategy c s, MonadUpdate c s, 
+               Update c s s, Narrow a, Solver c, Binding c a)
+           => Context c -> ID -> Nondet c s a
+ narrowVar (Context c) u@(ID us) = joinNondet $ do
+   let v = supplyValue us
+   isn <- isNarrowed c v
+   if isn
+    then maybe (error "no binding for narrowed variable") return (binding c v)
+    else do
+     update (branchOn c v)
+     return (unknown u)
+
+An evaluation context that is a `Solver` or supports `Binding` can be
+transformed without losing this functionality.
+
+ instance (Solver c, Transformer t) => Solver (t c)
+  where
+   branchOn _ = inside . branchOn undefined
+
+ instance (Binding c a, Transformer t) => Binding (t c) a
+  where
+   binding = binding . project
+

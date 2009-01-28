@@ -15,7 +15,7 @@ functional-logic programming in Haskell.
 >
 > module CFLP (
 >
->   CFLP, Enumerable(..), Ctx, Data, Computation,
+>   CFLP, Enumerable(..), Ctx, Data,
 >
 >   eval, evalPartial, evalPrint,
 >
@@ -38,6 +38,7 @@ The type class `CFLP` amalgamates all class constraints on constraint
 functional-logic computations.
 
 > class (Strategy (Ctx s) s, MonadPlus s
+>                          , Solvable (Ctx s)
 >                          , MonadUpdate (Ctx s) s
 >                          , Update (Ctx s) s s
 >                          , Update (Ctx s) s (Res s)
@@ -50,13 +51,10 @@ functional-logic computations.
 >
 > instance (MonadPlus m, Enumerable m) => CFLP (Monadic (UpdateT () m))
 
-We define a shortcut for types of constraint functional-logic data and
-computations that can be parameterized by an arbitrary strategy.
+We define a shortcut for types of constraint functional-logic data
+that can be parameterized by an arbitrary strategy.
 
 > type Data s a = Nondet (Ctx s) s a
->
-> type Computation a
->   = forall s . CFLP s => Context (Ctx s) -> ID -> Data s a
 
 We provide
 
@@ -70,12 +68,15 @@ We provide
     solutions of a constraint functional-logic computation.
 
 > eval, evalPartial
->   :: (Monad s, CFLP s, Generic a) => [s (Ctx s)] -> Computation a -> IO [a]
+>   :: (Monad s, CFLP s, Generic a)
+>   => [s (Ctx s)]
+>   -> (Context (Ctx s) -> ID -> Data s a)
+>   -> IO [a]
 > eval        s = liftM (liftM primitive) . evaluate s groundNormalForm
 > evalPartial s = liftM (liftM primitive) . evaluate s partialNormalForm
 >
 > evalPrint :: (Monad s, CFLP s, Generic a)
->           => [s (Ctx s)] -> Computation a -> IO ()
+>           => [s (Ctx s)] -> (Context (Ctx s) -> ID -> Data s a) -> IO ()
 > evalPrint s op = evaluate s partialNormalForm op >>= printSols
 >
 > printSols :: Show a => [a] -> IO ()
@@ -95,10 +96,14 @@ constraint functional-logic computation according to a given strategy.
 
 > evaluate :: CFLP s
 >          => [s (Ctx s)]
->          -> (s (Ctx s) -> Nondet (Ctx s) s a -> Res s b)
->          -> Computation a
+>          -> (s (Ctx s) -> Nondet (Ctx s) s a -> Res s (b, Ctx s))
+>          -> (Context (Ctx s) -> ID -> Data s a)
 >          -> IO [b]
 > evaluate s evalNondet op = do
 >   i <- initID
->   return $ concatMap enumeration $
->     map (\c -> evalNondet c (Typed (c >>= untyped . flip op i . Context))) s
+>   return $ concatMap enumeration $ map (run i) s
+>  where
+>   run i c = do
+>     (res,ctx) <- evalNondet c (Typed (c >>= untyped . flip op i . Context))
+>     guard (solvable ctx)
+>     return res

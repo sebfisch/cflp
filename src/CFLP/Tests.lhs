@@ -3,7 +3,10 @@
 
 This module defines auxiliary functions for the test suite.
 
-> {-# LANGUAGE RankNTypes #-}
+> {-# LANGUAGE
+>       FlexibleContexts,
+>       RankNTypes
+>   #-}
 >
 > module CFLP.Tests where
 >
@@ -26,7 +29,7 @@ to use errors when testing laziness.
 > assertResultsLimit :: (Generic a, Show a, Eq a)
 >                    => Maybe Int -> Computation a -> [a] -> Assertion
 > assertResultsLimit limit op expected = do
->   actual <- eval (limDFS 100) op
+>   actual <- eval (limDFS_B 100) op
 >   maybe id take limit actual @?= expected
 
 We provide auxiliary assertions `assertResults...` that compute (a

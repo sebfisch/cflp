@@ -137,6 +137,19 @@ Deconstructors are also defined mechanically:
 > dTrue  c True  = Just (c [])
 > dTrue  _ _     = Nothing
 
+We can even define an instance of integers:
+
+> instance ApplyCons Int where type Result Int = Int; applyCons = const
+> instance Generic Int
+>  where constr = foldr1 (!) . map intCons $ interleaved [0..] [-1,-2..]
+>
+> interleaved :: [a] -> [a] -> [a]
+> interleaved []     ys = ys
+> interleaved (x:xs) ys = x : interleaved ys xs
+>
+> intCons :: Int -> Int -> GenericOps Int
+> intCons n = cons (show n) n (\c m -> if n==m then Just (c []) else Nothing)
+
 Combinators
 -----------
 

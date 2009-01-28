@@ -4,10 +4,16 @@
 This module defines tests that show how to define higher-order
 functional-logic programs.
 
+> {-# LANGUAGE
+>       FlexibleContexts
+>   #-}
+>
 > module CFLP.Tests.HigherOrder where
 >
 > import CFLP
 > import CFLP.Tests
+>
+> import CFLP.Strategies
 >
 > import Test.HUnit
 >

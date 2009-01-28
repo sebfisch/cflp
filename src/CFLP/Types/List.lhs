@@ -48,7 +48,7 @@ This module provides non-deterministic lists.
 We can use logic variables of a list type if there are logic variables
 for the element type.
 
-> instance (Narrow a, Generic a) => Narrow [a]
+> instance (Narrow c a, Generic a) => Narrow c [a]
 >  where
 >   narrow cs u = withUnique (\u1 u2 -> 
 >                   (oneOf [nil, unknown u1 ^: unknown u2] cs u)) u

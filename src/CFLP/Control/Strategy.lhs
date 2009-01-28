@@ -19,7 +19,9 @@ transformers.
 >
 > module CFLP.Control.Strategy (
 >
->   Enumerable(..), Ctx, Res, Strategy(..), Transformer(..), StrategyT(..),
+>   Enumerable(..), Solvable(..), Ctx, Res, 
+>
+>   Strategy(..), Transformer(..), StrategyT(..),
 >
 >   Monadic(..), inside
 >
@@ -55,6 +57,21 @@ monad, then the base monad is used to return results when computing
 normal forms.
 
 > type instance Res (UpdateT c m) = m
+
+Evaluation context must provide a predicate that tells whether they
+are solvable.
+
+> class Solvable c
+>  where
+>   solvable     :: c -> Bool
+>   bindVars :: MonadPlus m => c -> m c
+
+The unit context is solvable.
+
+> instance Solvable ()
+>  where
+>   solvable _ = True
+>   bindVars   = return
 
 A strategy is parameterised by an evlauation context of type `c`. The
 type of this context may be different from `Ctx s` because a strategy
@@ -150,6 +167,15 @@ The operation
 
 transforms the base value of a transformed value with a monadic update
 operation.
+
+If an evaluation context is solvable, then a transformed context also
+is. This instance may overlap with more specific instances that
+redefine the operation for specific solvers.
+
+> instance (Solvable c, Transformer t) => Solvable (t c)
+>  where
+>   solvable = solvable . project
+>   bindVars = inside bindVars
 
 
 Strategy Transformers

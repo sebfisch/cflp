@@ -7,7 +7,7 @@
 >
 > module CFLP.Data.Primitive (
 >
->   nondet, groundNormalForm, partialNormalForm,
+>   nondet, groundNormalForm, partialNormalForm, withPrim,
 >
 >   prim_eq
 >
@@ -33,7 +33,7 @@ We provide a generic operation `nondet` to translate instances of
 > nf2hnf (Var _) = error "Primitive.nf2hnf: cannot convert logic variable"
 > nf2hnf (Data label args) = Cons label (map (return . nf2hnf) args)
 > nf2hnf (Fun f) = Lambda (\x _ _ -> liftM (nf2hnf . f) $ gnf x)
->  where gnf x = flip groundNormalForm (Typed x) $ return $ 
+>  where gnf x = liftM fst $ flip groundNormalForm (Typed x) $ return $ 
 >                  error "Primitive.nf2hnf: primitive function uses context"
 
 The `...NormalForm` functions evaluate a non-deterministic value and
@@ -43,16 +43,17 @@ representation. Partial normal forms may contain unbound logic
 variables while ground normal forms are data terms.
 
 > groundNormalForm :: (Monad s, Monad m, Update c s m)
->                  => s c -> Nondet c s a -> m NormalForm
+>                  => s c -> Nondet c s a -> m (NormalForm,c)
 > groundNormalForm c x
 >   = evalStateT (updateState c) (undefined `asContextOf` c) >>=
->     evalStateT (gnf (untyped x))
+>     runStateT (gnf (untyped x))
 >
-> partialNormalForm :: (Monad s, Strategy c s, Monad m, Update c s m)
->                   => s c -> Nondet c s a -> m NormalForm
+> partialNormalForm :: (Monad s, Strategy c s, Solvable c, 
+>                       MonadPlus m, Update c s m)
+>                   => s c -> Nondet c s a -> m (NormalForm,c)
 > partialNormalForm c x
 >   = evalStateT (updateState c) (undefined `asContextOf` c) >>=
->     evalStateT (pnf (untyped x))
+>     runStateT (pnf (untyped x))
 >
 > asContextOf :: c -> s c -> c
 > asContextOf = const
@@ -72,11 +73,12 @@ first time.
 > mkVar :: ID -> a -> NormalForm
 > mkVar (ID us) _ = Var (supplyValue us)
 >
-> pnf :: (Monad s, Strategy c s, Monad m, Update c s m)
+> pnf :: (Monad s, Strategy c s, Solvable c, MonadPlus m, Update c s m)
 >     => Untyped c s -> StateT c m NormalForm
-> pnf x
->    = nf isNarrowed ((return.).Cons) ((return.).FreeVar) (return.Lambda) x
->  >>= nf isNarrowed Data mkVar Fun
+> pnf x = do
+>   y <- nf isNarrowed ((return.).Cons) ((return.).FreeVar) (return.Lambda) x
+>   get >>= bindVars >>= put
+>   nf isNarrowed Data mkVar Fun y
 
 The `nf` function is used by all normal-form functions and performs
 all the work.
@@ -100,6 +102,17 @@ all the work.
 >       nfs <- mapM (nf isn cns fv fun) args
 >       return (cns label nfs)
 >     Lambda _ -> return . fun $ error "Data.LazyNondet.Primitive.nf: function"
+
+We provide combinator similar to `withHNF` for matching primitive
+ground-normal forms.
+
+> withPrim :: (Monad s, Update c s s, Generic a)
+>          => Nondet c s a
+>          -> (a -> c -> Nondet c s b)
+>          -> Context c -> Nondet c s b
+> withPrim x f (Context c) = Typed $ do
+>   (y,c') <- runStateT (gnf (untyped x)) c
+>   untyped (f (primitive y) c')
 
 We provide a generic comparison function for untyped non-deterministic
 data that is used to define a typed equality test in the

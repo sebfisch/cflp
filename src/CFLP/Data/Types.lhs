@@ -11,15 +11,17 @@ non-deterministic data.
 >
 > module CFLP.Data.Types (
 >
->   Context(..), ID(..), 
+>   Context(..), ID(..), label,
 >
 >   ConsLabel(..), NormalForm(..), HeadNormalForm(..), Untyped, Nondet(..),
 >
->   freeVar, delayed
+>   freeVar, delayed, joinNondet
 >
 > ) where
 >
 > import Data.Supply
+>
+> import Control.Monad
 >
 > import CFLP.Control.Monad.Update
 >
@@ -27,6 +29,12 @@ non-deterministic data.
 >
 > newtype ID = ID (Supply Int)
 >
+> label :: ID -> Int
+> label (ID us) = supplyValue us
+
+The normal form of data is represented by the type `NormalForm` which
+defines a tree of constructors and logic variables or functions.
+
 > data NormalForm
 >   = Data ConsLabel [NormalForm]
 >   | Var  Int
@@ -38,8 +46,10 @@ non-deterministic data.
 >  where
 >   showsPrec _ = (++) . name
 
-The normal form of data is represented by the type `NormalForm` which
-defines a tree of constructors and logic variables or functions.
+Data in lazy functional-logic programs is evaluated on demand. The
+evaluation of arguments of a constructor may lead to different
+non-deterministic results. Hence, we use a monad around every
+constructor in the head-normal form of a value.
 
 > data HeadNormalForm cs m
 >   = Cons ConsLabel [Untyped cs m]
@@ -49,41 +59,43 @@ defines a tree of constructors and logic variables or functions.
 >
 > type Untyped cs m = m (HeadNormalForm cs m)
 
-Data in lazy functional-logic programs is evaluated on demand. The
-evaluation of arguments of a constructor may lead to different
-non-deterministic results. Hence, we use a monad around every
-constructor in the head-normal form of a value.
-
-> newtype Nondet cs m a = Typed { untyped :: Untyped cs m }
-
 Untyped non-deterministic data can be phantom typed in order to define
 logic variables by overloading. The phantom type must be the Haskell
 data type that should be used for conversion into primitive data.
+
+> newtype Nondet cs m a = Typed { untyped :: Untyped cs m }
 
 Free (logic) variables are represented by `FreeVar u x` where `u` is a
 uniqe identifier and `x` represents the result of narrowing the
 variable according to the constraint store passed to the operation
 that creates the variable.
 
-> freeVar :: Monad m => ID -> Nondet cs m a -> Nondet cs m a
-> freeVar u = Typed . return . FreeVar u . untyped
-
 The function `freeVar` is used to put a name around a narrowed free
 variable.
 
-> delayed :: Monad m => (Context cs -> m Bool) -> (Context cs -> Nondet cs m a)
->         -> Nondet cs m a
-> delayed p resume = Typed . return . Delayed p $ (untyped . resume)
+> freeVar :: Monad m => ID -> Nondet cs m a -> Nondet cs m a
+> freeVar u = Typed . return . FreeVar u . untyped
 
 With `delayed` computations can be delayed to be reexecuted with the
 current constraint store whenever they are demanded. This is useful to
 avoid unessary branching when narrowing logic variables. Use with
 care: `delayed` intentionally destroys sharing!
 
+> delayed :: Monad m => (Context cs -> m Bool) -> (Context cs -> Nondet cs m a)
+>         -> Nondet cs m a
+> delayed p resume = Typed . return . Delayed p $ (untyped . resume)
+
 The first parameter is a predicate on constraint stores that specifies
 whether the result of pattern matching the constructed delayed value
 is narrowed w.r.t. the current evaluation context. If it is not,
 pattern matching on it will be delayed again.
+
+The function `joinNondet` transforms a monadic action that yields a
+non-deterministic value into a single non-deterministic value by
+lifting the monad inside the newtype constructor.
+
+> joinNondet :: Monad m => m (Nondet c m a) -> Nondet c m a
+> joinNondet = Typed . join . liftM untyped
 
 `Show` Instances
 ----------------
