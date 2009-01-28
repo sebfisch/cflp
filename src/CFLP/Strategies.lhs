@@ -5,18 +5,23 @@ This module exposes strategies for CFLP by re-exporting them from
 other modules in this package.
 
 > {-# LANGUAGE
->       FlexibleInstances
+>       MultiParamTypeClasses,
+>       FlexibleInstances,
+>       TypeFamilies
 >   #-}
 >
 > module CFLP.Strategies (
 >
->   dfs, limDFS, iterDFS, bfs, diag, rndDFS
+>   dfs, limDFS, iterDFS, bfs, diag, fair, rndDFS
 >
 >  ) where
 >
 > import Control.Monad.Logic
 > import Control.Monad.Omega
 > import Control.Monad.Levels
+> import Control.Monad.Stream
+>
+> import CFLP.Control.Strategy
 >
 > import CFLP
 > import CFLP.Strategies.CallTimeChoice
@@ -69,6 +74,16 @@ Fair diagonalization by Luke Palmer:
 >
 > diag :: [CTC (Monadic (UpdateT (StoreCTC ()) Omega)) (StoreCTC ())]
 > diag = [callTimeChoice monadic]
+
+Fair interleaving by Oleg Kiselyov:
+
+Instead of using `Monadic` we provide a custom instance of
+`Strategy`. We need to suspend choices in order to ensure fairness.
+
+> instance Enumerable Stream where enumeration = runStream
+>
+> fair :: [CTC (Monadic (UpdateT (StoreCTC ()) Stream)) (StoreCTC ())]
+> fair = [callTimeChoice monadic]
 
 We combine randomization with depth-first search. Here, it is crucial
 to use the call-time choice transformer *before* the randomizer

@@ -107,8 +107,7 @@ straigh-forward.
 
 The operation
 
->   choose _ _ [x] = x
->   choose _ _ xs  = foldr mplus mzero xs
+>   choose _ _ xs = foldr1 mplus (mzero:xs)
 
 uses `mplus` and `mzero` to construct the choice. Note that these are
 the automatically derived operations.
