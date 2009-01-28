@@ -21,8 +21,6 @@ other modules in this package.
 > import Control.Monad.Levels
 > import Control.Monad.Stream
 >
-> import CFLP.Control.Strategy
->
 > import CFLP
 > import CFLP.Strategies.CallTimeChoice
 > import CFLP.Strategies.DepthCounter
