@@ -21,7 +21,7 @@ Stability:     alpha
 Extra-Source-Files: README, INSTALL, Makefile, configure, Test.lhs
 
 Library
-  Build-Depends:    base >= 4, mtl, syb, containers,
+  Build-Depends:    base == 4.*, mtl, syb, containers,
                     control-monad-omega, logict, level-monad, stream-monad,
                     incremental-sat-solver,
                     random, MonadRandom,
